@@ -36,7 +36,7 @@ export default function Home() {
         userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",
         endpointType: "staging_celo",
         userIdType: "hex", // use 'hex' for ethereum address or 'uuid' for uuidv4
-        userDefinedData: "verifying-player-identity",
+        userDefinedData: "276",
         disclosures: {
           // // what you want to verify from users' identity
           minimumAge: 18,
