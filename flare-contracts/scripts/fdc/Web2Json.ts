@@ -169,7 +169,7 @@ async function interactWithContract(characterList: PlayerStatsListInstance, proo
         data: decodedResponse,
     });
     console.log("Transaction:", transaction.tx, "\n");
-    console.log("Player Stats:\n", await characterList.getAllPlayerIds(), "\n");
+    console.log("Player Stats:\n", await characterList.getPlayerPerformance(276), "\n");
 }
 
 async function main() {
