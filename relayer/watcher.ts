@@ -68,3 +68,13 @@ main().catch((err) => {
   console.error("Error in watcher:", err);
   process.exit(1);
 });
+
+// playerVerified event: {
+//   message: '276',
+//   playerAddress: '0x4b4b30e2E7c6463b03CdFFD6c42329D357205334',
+//   firstName: 'NEYMAR',
+//   lastName: 'JUNIOR',
+//   nationality: 'USA',
+//   dateOfBirth: '05-02-92',
+//   gender: 'M'
+// }
