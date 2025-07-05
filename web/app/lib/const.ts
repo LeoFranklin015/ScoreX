@@ -3,6 +3,9 @@ export const CURVE_LEAGUE_CONTRACT_ADDRESS =
 export const FAN_TOKEN_CONTRACT_ADDRESS =
   "0xf37dbc3ed0e18096d885f7e191bd3845a48c9a64";
 
+export const PLAYER_LIST_CONTRACT_ADDRESS =
+  "0x9Da89E6D518EeD1e368f1882c7645aF7BF0D08f8";
+
 export const CURVE_LEAGUE_CONTRACT_ABI = [
   {
     inputs: [
@@ -1020,5 +1023,920 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
   {
     stateMutability: "payable",
     type: "receive",
+  },
+];
+
+export const PLAYER_LIST_CONTRACT_ABI = [
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "player",
+            type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "firstname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "lastname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "age",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "nationality",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "teamname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "position",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "goals",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "assists",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_drawn",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_committed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellow_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellowred_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "red_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_key",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_accuracy",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_scored",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_missed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "minutesPlayed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "appearances",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_on_target",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_attempts",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_success",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_blocks",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_interceptions",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_won",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_in",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_out",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_bench",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct PlayerStats",
+        name: "stats",
+        type: "tuple",
+      },
+    ],
+    name: "abiSignatureHack",
+    outputs: [],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "bytes32[]",
+            name: "merkleProof",
+            type: "bytes32[]",
+          },
+          {
+            components: [
+              {
+                internalType: "bytes32",
+                name: "attestationType",
+                type: "bytes32",
+              },
+              {
+                internalType: "bytes32",
+                name: "sourceId",
+                type: "bytes32",
+              },
+              {
+                internalType: "uint64",
+                name: "votingRound",
+                type: "uint64",
+              },
+              {
+                internalType: "uint64",
+                name: "lowestUsedTimestamp",
+                type: "uint64",
+              },
+              {
+                components: [
+                  {
+                    internalType: "string",
+                    name: "url",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "httpMethod",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "headers",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "queryParams",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "body",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "postProcessJq",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "abiSignature",
+                    type: "string",
+                  },
+                ],
+                internalType: "struct IWeb2Json.RequestBody",
+                name: "requestBody",
+                type: "tuple",
+              },
+              {
+                components: [
+                  {
+                    internalType: "bytes",
+                    name: "abiEncodedData",
+                    type: "bytes",
+                  },
+                ],
+                internalType: "struct IWeb2Json.ResponseBody",
+                name: "responseBody",
+                type: "tuple",
+              },
+            ],
+            internalType: "struct IWeb2Json.Response",
+            name: "data",
+            type: "tuple",
+          },
+        ],
+        internalType: "struct IWeb2Json.Proof",
+        name: "data",
+        type: "tuple",
+      },
+    ],
+    name: "addPlayer",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "player",
+            type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "firstname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "lastname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "age",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "nationality",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "teamname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "position",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "goals",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "assists",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_drawn",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_committed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellow_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellowred_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "red_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_key",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_accuracy",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_scored",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_missed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "minutesPlayed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "appearances",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_on_target",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_attempts",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_success",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_blocks",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_interceptions",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_won",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_in",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_out",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_bench",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct PlayerStats",
+        name: "stats",
+        type: "tuple",
+      },
+    ],
+    name: "calculatePerformance",
+    outputs: [
+      {
+        internalType: "uint8",
+        name: "",
+        type: "uint8",
+      },
+    ],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAllPlayerIds",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "",
+        type: "uint256[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "playerId",
+        type: "uint256",
+      },
+    ],
+    name: "getCalculatedPerformance",
+    outputs: [
+      {
+        internalType: "uint8",
+        name: "",
+        type: "uint8",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "playerId",
+        type: "uint256",
+      },
+    ],
+    name: "getPlayerPerformance",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint8",
+        name: "",
+        type: "uint8",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "playerId",
+        type: "uint256",
+      },
+    ],
+    name: "getPlayerStats",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "player",
+            type: "uint256",
+          },
+          {
+            internalType: "string",
+            name: "firstname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "lastname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "age",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "nationality",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "teamname",
+            type: "string",
+          },
+          {
+            internalType: "string",
+            name: "position",
+            type: "string",
+          },
+          {
+            internalType: "uint256",
+            name: "goals",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "assists",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_drawn",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "fouls_committed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellow_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "yellowred_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "red_cards",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_key",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "passes_accuracy",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_scored",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "penalties_missed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "minutesPlayed",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "appearances",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "shots_on_target",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_attempts",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "dribble_success",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_blocks",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "tackles_interceptions",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_total",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "duels_won",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_in",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_out",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "substitutes_bench",
+            type: "uint256",
+          },
+        ],
+        internalType: "struct PlayerStats[]",
+        name: "",
+        type: "tuple[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "playerIds",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "players",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "player",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "firstname",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "lastname",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "age",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "nationality",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "teamname",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "position",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "goals",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "assists",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "fouls_drawn",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "fouls_committed",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "yellow_cards",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "yellowred_cards",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "red_cards",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "passes_total",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "passes_key",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "passes_accuracy",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "penalties_scored",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "penalties_missed",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minutesPlayed",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "appearances",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "shots_total",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "shots_on_target",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "dribble_attempts",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "dribble_success",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tackles_total",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tackles_blocks",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tackles_interceptions",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "duels_total",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "duels_won",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "substitutes_in",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "substitutes_out",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "substitutes_bench",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
 ];
