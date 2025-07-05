@@ -29,24 +29,28 @@ export default function Home() {
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "self-workshop",
         endpoint: `${
           process.env.NEXT_PUBLIC_SELF_ENDPOINT ||
-          "0x07094A33D023D91AD89D3D1d2c52Bd7b8B17f64F"
+          "0x982FC6BF92082fEC510B27cf54fD070122682388"
         }`,
         logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png", // url of a png image, base64 is accepted but not recommended
-        userId: userId,
+        userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",
         endpointType: "staging_celo",
         userIdType: "hex", // use 'hex' for ethereum address or 'uuid' for uuidv4
-        userDefinedData: "Bonjour Cannes!",
+        userDefinedData: "verifying-player-identity",
         disclosures: {
           // // what you want to verify from users' identity
           minimumAge: 18,
-          // ofac: false,
-          // excludedCountries: [countries.BELGIUM],
+          ofac: true,
+          excludedCountries: [
+            countries.NORTH_KOREA,
+            countries.IRAN,
+            countries.RUSSIA,
+          ],
 
           // //what you want users to reveal
-          // name: false,
+          name: true,
           // issuing_state: true,
           nationality: true,
-          // date_of_birth: true,
+          date_of_birth: true,
           // passport_number: false,
           gender: true,
           // expiry_date: false,
