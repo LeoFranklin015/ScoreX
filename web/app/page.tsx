@@ -30,7 +30,7 @@ export default function Home() {
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "self-workshop",
         endpoint: `${
           process.env.NEXT_PUBLIC_SELF_ENDPOINT ||
-          "0x982FC6BF92082fEC510B27cf54fD070122682388"
+          "0xcE5D962E62813b7d6007303144595a04969A0ba8"
         }`,
         logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png", // url of a png image, base64 is accepted but not recommended
         userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",

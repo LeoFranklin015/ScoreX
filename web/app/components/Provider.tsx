@@ -77,7 +77,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [sdk] = useState<DeviceManagementKit>(() =>
     new DeviceManagementKitBuilder()
       .addTransport(webHidTransportFactory)
-
+      // .addTransport(webBleTransportFactory)
       .build()
   );
   const [deviceSessionId, setSessionId] = useState<DeviceSessionId>();

@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 async function main() {
-  console.log("Deploying ProofOfHuman contract...");
+  console.log("Deploying ProofOfPlayer contract...");
 
   const mockScope = 1;
   const hubAddress = process.env.IDENTITY_VERIFICATION_HUB;
@@ -18,22 +18,22 @@ async function main() {
   console.log("Using IdentityVerificationHub at:", hubAddress);
   console.log("Using VerificationConfigId:", verificationConfigId);
 
-  const ProofOfHuman = await ethers.getContractFactory("ProofOfHuman");
-  const proofOfHuman = await ProofOfHuman.deploy(
+  const proofOfPlayer = await ethers.getContractFactory("ProofOfPlayer");
+  const ProofOfPlayer = await proofOfPlayer.deploy(
     hubAddress,
     mockScope,
     verificationConfigId
   );
 
-  await proofOfHuman.waitForDeployment();
-  const contractAddress = await proofOfHuman.getAddress();
+  await ProofOfPlayer.waitForDeployment();
+  const contractAddress = await ProofOfPlayer.getAddress();
 
-  console.log("ProofOfHuman deployed to:", contractAddress);
+  console.log("ProofOfPlayer deployed to:", contractAddress);
   console.log("Network:", network.name);
 
   // Wait for confirmations
   console.log("Waiting for 5 block confirmations...");
-  await (await proofOfHuman.deploymentTransaction())?.wait(5);
+  await (await ProofOfPlayer.deploymentTransaction())?.wait(5);
 
   // Verify on Celoscan
   if (network.name === "alfajores" && process.env.CELOSCAN_API_KEY) {
