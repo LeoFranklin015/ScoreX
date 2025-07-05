@@ -7,11 +7,13 @@ import {AssetManagerSettings} from "@flarenetwork/flare-periphery-contracts/cost
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {PlayerStatsList} from "../fdc/Web2Json.sol";
 
 contract FAssetsLottery is ReentrancyGuard, Ownable {
     RandomNumberV2Interface public immutable randomNumberGenerator;
     IAssetManager public immutable assetManager;
     IERC20 public immutable fAssetToken;
+    PlayerStatsList public immutable playerStatsList;
 
     enum Result { Draw, ArrayA, ArrayB }
     enum GameState { Open, Closed, Settled }
@@ -52,7 +54,8 @@ contract FAssetsLottery is ReentrancyGuard, Ownable {
         address _fAssetToken,
         uint256 _minStakeAmount,
         uint256 _maxStakeAmount,
-        address _feeCollector
+        address _feeCollector,
+        address _playerStatsList
     ) Ownable(msg.sender) {
         randomNumberGenerator = RandomNumberV2Interface(_randomNumberGenerator);
         assetManager = IAssetManager(_assetManager);
@@ -60,6 +63,7 @@ contract FAssetsLottery is ReentrancyGuard, Ownable {
         minStakeAmount = _minStakeAmount;
         maxStakeAmount = _maxStakeAmount;
         feeCollector = _feeCollector;
+        playerStatsList = PlayerStatsList(_playerStatsList);
     }
 
     modifier onlyGamePlayer(uint256 gameId) {
@@ -172,18 +176,22 @@ contract FAssetsLottery is ReentrancyGuard, Ownable {
             game.picksB[i] = game.arrayB[indices[i]];
         }
 
-        // Calculate scores
-        uint256 scoreA = 0;
-        uint256 scoreB = 0;
+        // Calculate scores using player performance metrics
+        uint256 totalScoreA = 0;
+        uint256 totalScoreB = 0;
 
         for (uint256 i = 0; i < 3; i++) {
-            if (game.picksA[i] > game.picksB[i]) scoreA++;
-            else if (game.picksB[i] > game.picksA[i]) scoreB++;
+            // Get performance scores for each selected player ID
+            uint8 performanceA = playerStatsList.getCalculatedPerformance(game.picksA[i]);
+            uint8 performanceB = playerStatsList.getCalculatedPerformance(game.picksB[i]);
+            
+            totalScoreA += performanceA;
+            totalScoreB += performanceB;
         }
 
-        if (scoreA > scoreB) {
+        if (totalScoreA > totalScoreB) {
             game.winner = Result.ArrayA;
-        } else if (scoreB > scoreA) {
+        } else if (totalScoreB > totalScoreA) {
             game.winner = Result.ArrayB;
         } else {
             game.winner = Result.Draw;
