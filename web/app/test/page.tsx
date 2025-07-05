@@ -9,6 +9,7 @@ import { Divider } from "../components/Divider";
 import { SectionContainer } from "../components/SectionContainer";
 import { DeviceStatus } from "@ledgerhq/device-management-kit";
 import { ethers } from "ethers";
+import { MintPlayerWithLedger } from "../components/MintPlayerWithLedger";
 
 function LedgerDemo() {
   const {
@@ -228,8 +229,6 @@ function LedgerDemo() {
 }
 
 export default function Home() {
-  return (
-
-      <LedgerDemo />
-  );
+  // return <LedgerDemo />;
+  return <MintPlayerWithLedger />;
 }
