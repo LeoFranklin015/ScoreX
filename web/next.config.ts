@@ -1,7 +1,30 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async headers() {
+    return [
+      {
+        source: "/test-embed",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value:
+              "usb=(self), hid=(self), bluetooth=(self), bluetooth-advertisement=(self)",
+          },
+        ],
+      },
+      {
+        source: "/embed",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors *;",
+          },
+        ],
+      },
+    ];
+  },
+  images: {},
 };
 
 export default nextConfig;

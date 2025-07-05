@@ -10,7 +10,7 @@ import {SelfStructs} from "@selfxyz/contracts/contracts/libraries/SelfStructs.so
  * @notice Test implementation of SelfVerificationRoot for testing purposes
  * @dev This contract provides a concrete implementation of the abstract SelfVerificationRoot
  */
-contract ProofOfHuman is SelfVerificationRoot {
+contract ProofOfPlayer is SelfVerificationRoot {
     // Storage for testing purposes
     bool public verificationSuccessful;
     ISelfVerificationRoot.GenericDiscloseOutputV2 public lastOutput;
@@ -22,7 +22,19 @@ contract ProofOfHuman is SelfVerificationRoot {
     // Events for testing
     event VerificationCompleted(
         ISelfVerificationRoot.GenericDiscloseOutputV2 output,
-        bytes userData
+        bytes userData,
+        string firstName,
+        string lastName
+    );
+
+    event playerVerified(
+        string message,
+        address playerAddress,
+        string firstName,
+        string lastName,
+        string nationality,
+        string dateOfBirth,
+        string gender
     );
 
     /**
@@ -49,9 +61,13 @@ contract ProofOfHuman is SelfVerificationRoot {
         verificationSuccessful = true;
         lastOutput = output;
         lastUserData = userData;
+        string memory message = string(userData);
         lastUserAddress = address(uint160(output.userIdentifier));
+        
 
-        emit VerificationCompleted(output, userData);
+
+        emit playerVerified(message, lastUserAddress, output.name[0], output.name[1], output.nationality, output.dateOfBirth, output.gender);
+
     }
 
     /**

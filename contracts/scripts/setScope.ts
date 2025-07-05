@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 async function main() {
-  console.log("Setting scope for ProofOfHuman contract...");
+  console.log("Setting scope for ProofOfPlayer contract...");
 
   // Check if deployment info exists
   const deploymentPath = "./deployments/latest.json";
@@ -22,7 +22,7 @@ async function main() {
 
   // Get the new scope value (here hardcoded, but can be used from env if needed)
   const newScope =
-    "8023216275026115714490675884554454743996023253552207984816102252921186106513"; // replace with `process.env.NEW_SCOPE` if required
+    "4504260800895294680552133628201849203823271588803099935070391521432489695076"; // replace with `process.env.NEW_SCOPE` if required
 
   if (!newScope) {
     console.error("Please provide the new scope value:");
@@ -36,12 +36,12 @@ async function main() {
   console.log("Setting scope to:", newScope);
 
   // Attach to deployed contract
-  const ProofOfHuman = await ethers.getContractFactory("ProofOfHuman");
-  const proofOfHuman = ProofOfHuman.attach(contractAddress);
+  const proofOfPlayer = await ethers.getContractFactory("ProofOfPlayer");
+  const ProofOfPlayer = proofOfPlayer.attach(contractAddress);
 
   // Read current scope
   try {
-    const currentScope = await proofOfHuman.scope();
+    const currentScope = await ProofOfPlayer.scope();
     console.log("Current scope:", currentScope.toString());
   } catch (error: any) {
     console.warn("Could not read current scope:", error.message);
@@ -50,14 +50,14 @@ async function main() {
   // Call setScope
   try {
     console.log("Calling setScope...");
-    const tx = await proofOfHuman.setScope(newScope);
+    const tx = await ProofOfPlayer.setScope(newScope);
     console.log("Transaction hash:", tx.hash);
 
     console.log("Waiting for confirmation...");
     const receipt = await tx.wait();
     console.log("Confirmed in block:", receipt.blockNumber);
 
-    const updatedScope = await proofOfHuman.scope();
+    const updatedScope = await ProofOfPlayer.scope();
     console.log("Updated scope:", updatedScope.toString());
 
     console.log("\n✅ Scope update complete!");
