@@ -1,2 +1,4 @@
 
 /FdcServer/node_modules
+contracts/bun.lock
+flare-contracts/yarn.lock
