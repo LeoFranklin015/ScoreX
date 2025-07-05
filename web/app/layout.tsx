@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google"
+import { Orbitron } from "next/font/google"
 import "./globals.css";
 import { LedgerProvider } from "./components/Provider";
+import { MintedPlayersProvider } from "./lib/minted-players-context";
+import { Navbar } from "./components/navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const orbitron = Orbitron({
   subsets: ["latin"],
-});
+  weight: ["400", "700", "900"],
+  variable: "--font-pixel",
+})
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,13 +25,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <LedgerProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+      <MintedPlayersProvider>
+          <body className={`${inter.className} ${orbitron.variable} bg-zinc-950 text-zinc-100 min-h-screen`}>
           {children}
         </body>
+        </MintedPlayersProvider>
       </LedgerProvider>
     </html>
   );
