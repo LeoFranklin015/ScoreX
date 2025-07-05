@@ -10,6 +10,7 @@ import {
 } from "@selfxyz/qrcode";
 import { v4 } from "uuid";
 import { ethers } from "ethers";
+import { LedgerConnectButton } from "./components/LedgerConnectButton";
 
 export default function Home() {
   const router = useRouter();
@@ -158,6 +159,7 @@ export default function Home() {
             )}
           </div>
         </div>
+        <LedgerConnectButton />
 
         {/* Toast notification */}
         {showToast && (

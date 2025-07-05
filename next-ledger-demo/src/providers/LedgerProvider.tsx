@@ -61,8 +61,6 @@ interface LedgerContextType {
   >;
   setConnectionError: React.Dispatch<React.SetStateAction<unknown>>;
   broadcastTransaction: (signedTxHex: string) => Promise<string>;
-  address: string | undefined;
-  setAddress: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 const LedgerContext = createContext<LedgerContextType | undefined>(undefined);
@@ -82,7 +80,6 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [deviceSessionId, setSessionId] = useState<DeviceSessionId>();
   const [connectionError, setConnectionError] = useState<unknown>();
-  const [address, setAddress] = useState<string | undefined>(undefined);
 
   const connectDevice = useCallback(async () => {
     try {
@@ -132,7 +129,6 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
                 getAddressDAState.output !== undefined
               ) {
                 setOutput(getAddressDAState.output);
-                setAddress(getAddressDAState.output.address);
               }
               break;
             case DeviceActionStatus.Error:
@@ -204,7 +200,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
   const broadcastTransaction = async (signedTxHex: string) => {
     // Use Sepolia testnet for safety; replace with mainnet if needed
     const provider = new ethers.JsonRpcProvider(
-      "https://coston2-api.flare.network/ext/C/rpc"
+      "https://base-sepolia.g.alchemy.com/v2/EnE4hwu9YMlp-bqRJlJflpKnoRqBoZhf"
     );
     const txResponse = await provider.broadcastTransaction(signedTxHex);
     return txResponse.hash;
@@ -222,8 +218,6 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
       setSessionId,
       setConnectionError,
       broadcastTransaction,
-      address,
-      setAddress,
     }),
     [
       sdk,
@@ -233,7 +227,6 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
       keyringEth,
       getAddress,
       signTransaction,
-      address,
     ]
   );
 

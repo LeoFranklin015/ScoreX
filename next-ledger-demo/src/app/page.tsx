@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { LedgerProvider, useLedger } from "../components/Provider";
-import { useDeviceSessionState } from "../hooks/useDeviceSession";
+import { LedgerProvider, useLedger } from "../providers/LedgerProvider";
+import { useDeviceSessionState } from "../hooks/useDeviceSessionState";
 import { DeviceSessionUI } from "../components/DeviceSessionUI";
 import { LabelizedInput } from "../components/LabelizedInput";
 import { LabelizedJSON } from "../components/LabelizedJSON";
@@ -29,11 +29,11 @@ function LedgerDemo() {
   const [value, setValue] = useState("0.001"); // ETH
   const [nonce, setNonce] = useState(0);
   const [gasLimit, setGasLimit] = useState(21000);
-  const [gasPrice, setGasPrice] = useState("30000000000"); // 30 gwei
+  const [gasPrice, setGasPrice] = useState("1000000000"); // 1 gwei
 
   // Provider for Sepolia
   const provider = new ethers.JsonRpcProvider(
-    "https://coston2-api.flare.network/ext/C/rpc"
+    "https://base-sepolia.g.alchemy.com/v2/EnE4hwu9YMlp-bqRJlJflpKnoRqBoZhf"
   );
 
   // Build unsigned tx
@@ -44,7 +44,7 @@ function LedgerDemo() {
       nonce,
       gasLimit,
       gasPrice,
-      chainId: 114,
+      chainId: 84532, // Base Sepolia
     };
   }, [to, value, nonce, gasLimit, gasPrice]);
 
