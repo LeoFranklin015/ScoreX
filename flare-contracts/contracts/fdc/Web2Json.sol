@@ -8,7 +8,7 @@ struct PlayerStats {
     uint256 player;
     string firstname;
     string lastname;
-    uint256 age;
+    string age;
     string nationality;
     string teamname;
     string position;
@@ -48,50 +48,6 @@ interface IPlayerStatsList {
 contract PlayerStatsList {
     mapping(uint256 => PlayerStats[]) public players;
     uint256[] public playerIds;
-    
-    // Constructor to initialize with sample data
-    constructor() {
-        // Sample player data
-        PlayerStats memory samplePlayer = PlayerStats({
-            player: 1,
-            firstname: "Lionel",
-            lastname: "Messi",
-            age: 36,
-            nationality: "Argentina",
-            teamname: "Inter Miami",
-            position: "attacker",
-            goals: 25,
-            assists: 15,
-            fouls_drawn: 45,
-            fouls_committed: 12,
-            yellow_cards: 2,
-            yellowred_cards: 0,
-            red_cards: 0,
-            passes_total: 1200,
-            passes_key: 85,
-            passes_accuracy: 88, // percentage
-            penalties_scored: 5,
-            penalties_missed: 1,
-            minutesPlayed: 2500,
-            appearances: 30,
-            shots_total: 110,
-            shots_on_target: 55,
-            dribble_attempts: 180,
-            dribble_success: 120,
-            tackles_total: 15,
-            tackles_blocks: 8,
-            tackles_interceptions: 12,
-            duels_total: 200,
-            duels_won: 130,
-            substitutes_in: 2,
-            substitutes_out: 5,
-            substitutes_bench: 1
-        });
-        
-        // Add the sample player to storage
-        players[1].push(samplePlayer);
-        playerIds.push(1);
-    }
 
     function addPlayer(IWeb2Json.Proof calldata data) public {
         require(isJsonApiProofValid(data), "Invalid proof");
