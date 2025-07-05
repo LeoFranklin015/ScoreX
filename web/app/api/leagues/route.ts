@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { footballAPI } from '@/lib/football-api'
+import { footballAPI } from '../../lib/football-api'
 
 export async function GET() {
   try {
