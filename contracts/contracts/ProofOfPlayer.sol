@@ -27,6 +27,16 @@ contract ProofOfPlayer is SelfVerificationRoot {
         string lastName
     );
 
+    event playerVerified(
+        string message,
+        address playerAddress,
+        string firstName,
+        string lastName,
+        string nationality,
+        string dateOfBirth,
+        string gender
+    );
+
     /**
      * @notice Constructor for the test contract
      * @param identityVerificationHubV2Address The address of the Identity Verification Hub V2
@@ -51,10 +61,13 @@ contract ProofOfPlayer is SelfVerificationRoot {
         verificationSuccessful = true;
         lastOutput = output;
         lastUserData = userData;
+        string memory message = string(userData);
         lastUserAddress = address(uint160(output.userIdentifier));
+        
 
 
-        emit VerificationCompleted(output, userData, output.name[0], output.name[1]);
+        emit playerVerified(message, lastUserAddress, output.name[0], output.name[1], output.nationality, output.dateOfBirth, output.gender);
+
     }
 
     /**

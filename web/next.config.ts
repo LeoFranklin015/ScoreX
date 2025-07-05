@@ -4,25 +4,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/embed",
+        source: "/test-embed",
         headers: [
           {
-            key: "X-Frame-Options",
-            value: "ALLOWALL",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: "frame-ancestors *;",
+            key: "Permissions-Policy",
+            value:
+              "usb=(self), hid=(self), bluetooth=(self), bluetooth-advertisement=(self)",
           },
         ],
       },
       {
         source: "/embed",
         headers: [
-          {
-            key: "X-Frame-Options",
-            value: "ALLOWALL",
-          },
           {
             key: "Content-Security-Policy",
             value: "frame-ancestors *;",

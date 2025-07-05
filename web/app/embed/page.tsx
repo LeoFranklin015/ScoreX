@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Test from "../test-embed/page";
 
 export async function generateMetadata({
   params,
@@ -16,7 +17,7 @@ export async function generateMetadata({
       images: ["/logo.png"],
     },
     other: {
-      "twitter:player": `https://eu-vegetarian-now-parks.trycloudflare.com/embed`,
+      "twitter:player": `https://continued-fraser-farms-reviewer.trycloudflare.com/embed`,
       "x-frame-options": "ALLOWALL",
       "content-security-policy": "frame-ancestors *;",
     },
@@ -29,8 +30,8 @@ export async function generateMetadata({
         "An autonomous agent that discovers global disasters, collect donations and keeps NGO’s accountable.",
       players: [
         {
-          playerUrl: `https://eu-vegetarian-now-parks.trycloudflare.com/embed`,
-          streamUrl: `https://eu-vegetarian-now-parks.trycloudflare.com/
+          playerUrl: `https://continued-fraser-farms-reviewer.trycloudflare.com/embed`,
+          streamUrl: `https://continued-fraser-farms-reviewer.trycloudflare.com/
           embed`,
           width: 360,
           height: 560,
@@ -42,18 +43,7 @@ export async function generateMetadata({
 export default function EmbedPage({ params }: { params: { id: string } }) {
   return (
     <div style={{ width: "100%", height: "100%", backgroundColor: "#000" }}>
-      <iframe
-        src={`/test-embed`}
-        style={{
-          width: "100%",
-          height: "100%",
-          border: "none",
-          position: "absolute",
-          top: 0,
-          left: 0,
-        }}
-        allow="fullscreen; web3; bluetooth; hid; usb;"
-      ></iframe>
+      <Test />
     </div>
   );
 }

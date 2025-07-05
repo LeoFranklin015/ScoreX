@@ -22,7 +22,7 @@ async function main() {
 
   // Get the new scope value (here hardcoded, but can be used from env if needed)
   const newScope =
-    "5628734556169666938015419118216330922642094436866176618530410120223370287576"; // replace with `process.env.NEW_SCOPE` if required
+    "4504260800895294680552133628201849203823271588803099935070391521432489695076"; // replace with `process.env.NEW_SCOPE` if required
 
   if (!newScope) {
     console.error("Please provide the new scope value:");

@@ -27,10 +27,10 @@ export default function Home() {
       const app = new SelfAppBuilder({
         version: 2,
         appName: process.env.NEXT_PUBLIC_SELF_APP_NAME || "Self Workshop",
-        scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "self-workshop",
+        scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "player-verification",
         endpoint: `${
           process.env.NEXT_PUBLIC_SELF_ENDPOINT ||
-          "0xcE5D962E62813b7d6007303144595a04969A0ba8"
+          "0xF9E87DfBab897c4B73caF8CafECd94B1c11EFe5F"
         }`,
         logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png", // url of a png image, base64 is accepted but not recommended
         userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",

@@ -14,10 +14,17 @@ import {
   DeviceActionStatus,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
+
 import {
   webHidTransportFactory,
   webHidIdentifier,
 } from "@ledgerhq/device-transport-kit-web-hid";
+
+// import {
+//   webBleTransportFactory,
+//   webBleIdentifier,
+// } from "@ledgerhq/device-transport-kit-web-ble";
+
 import {
   SignerEth,
   SignerEthBuilder,
@@ -90,6 +97,7 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
       const discoveredDevice = await firstValueFrom(
         sdk.startDiscovering({ transport: webHidIdentifier })
       );
+      // sdk.startDiscovering({ transport: webBleIdentifier })
       const sessionId = await sdk.connect({ device: discoveredDevice });
       setConnectionError(undefined);
       setSessionId(sessionId);
