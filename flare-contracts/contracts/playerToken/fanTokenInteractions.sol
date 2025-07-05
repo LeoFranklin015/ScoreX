@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./FanToken.sol";
+import "../fdc/Web2Json.sol";
 
 /**
  * @title FanBondGame
@@ -96,9 +97,42 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         return BASE_PRICE + (CURVE_COEFFICIENT * sold * sold * performanceMultiplier) / 1e18;
     }
 
-    function getPerformanceMultiplier(uint256 tokenId) public pure returns (uint256) {
-        tokenId; // unused
-        return 1e18;
+    // Address of the PlayerStatsList contract
+    address public playerStatsListAddress;
+
+    // Events
+    event PlayerStatsListAddressUpdated(address newAddress);
+
+    // Errors
+    error InvalidPlayerStatsListAddress();
+
+    /**
+     * @notice Sets the address of the PlayerStatsList contract
+     * @param _playerStatsListAddress Address of the PlayerStatsList contract
+     */
+    function setPlayerStatsListAddress(address _playerStatsListAddress) external onlyOwner {
+        if (_playerStatsListAddress == address(0)) revert InvalidPlayerStatsListAddress();
+        playerStatsListAddress = _playerStatsListAddress;
+        emit PlayerStatsListAddressUpdated(_playerStatsListAddress);
+    }
+
+    /**
+     * @notice Gets the performance multiplier for a player based on their stats
+     * @param tokenId The ID of the player token
+     * @return performanceMultiplier The performance multiplier scaled to 18 decimals (1e18 = 1.0x)
+     */
+    function getPerformanceMultiplier(uint256 tokenId) public view returns (uint256) {
+        if (playerStatsListAddress == address(0)) {
+            return 1e18; // Default to 1.0x if no stats contract is set
+        }
+        
+        try PlayerStatsList(playerStatsListAddress).getCalculatedPerformance(tokenId) returns (uint8 performanceScore) {
+            // Scale the performance score (1-10) to 18 decimals
+            // Example: score of 5 becomes 0.5e18, score of 10 becomes 1.0e18
+            return uint256(performanceScore) * 1e17;
+        } catch {
+            return 1e18; // Fallback to 1.0x if there's an error
+        }
     }
 
     function mintPlayer(uint256 tokenId) external payable nonReentrant {
