@@ -116,7 +116,7 @@ export default function Home() {
           {selfApp ? (
             <SelfQRcodeWrapper
               selfApp={selfApp}
-              onSuccess={handleSuccessfulVerification}
+              onSuccess={(data) => handleSuccessfulVerification}
               onError={() => {
                 displayToast("Error: Failed to verify identity");
               }}
