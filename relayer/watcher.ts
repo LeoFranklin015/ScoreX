@@ -36,7 +36,7 @@ async function main() {
 
   const flarecoston2Client = createWalletClient({
     account: privateKeyToAccount(
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
+      process.env.PRIVATE_KEY as string
     ),
     chain: flareTestnet,
     transport: http("https://coston2-api.flare.network/ext/C/rpc"),
@@ -52,13 +52,19 @@ async function main() {
     abi: PLAYER_VERIFIED_ABI,
     eventName: "playerVerified",
     pollingInterval: 5000, // poll every 5 seconds
-    onLogs: (logs) => {
+    onLogs: (logs: any) => {
       for (const log of logs) {
         // log.args is always present for conforming logs
         console.log("playerVerified event:", log.args);
+        flarecoston2Client.writeContract({
+          address: CONTRACT_ADDRESS as Address,
+          abi: PLAYER_VERIFIED_ABI,
+          functionName: "processPlayerVerification",
+          args: [log.args.message, log.args.playerAddress, log.args.firstName, log.args.lastName, log.args.dateOfBirth],
+        });
       }
     },
-    onError: (err) => {
+    onError: (err: any) => {
       console.error("Error watching event:", err);
     },
   });

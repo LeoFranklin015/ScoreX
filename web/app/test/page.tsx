@@ -229,8 +229,7 @@ function LedgerDemo() {
 
 export default function Home() {
   return (
-    <LedgerProvider>
+
       <LedgerDemo />
-    </LedgerProvider>
   );
 }
