@@ -8,7 +8,7 @@ struct PlayerStats {
     uint256 player;
     string firstname;
     string lastname;
-    uint256 age;
+    string age;
     string nationality;
     string teamname;
     string position;
