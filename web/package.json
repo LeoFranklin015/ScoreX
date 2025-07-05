@@ -9,16 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ledgerhq/context-module": "^1.4.0",
+    "@ledgerhq/device-management-kit": "^0.7.0",
+    "@ledgerhq/device-signer-kit-ethereum": "^1.5.0",
+    "@ledgerhq/device-transport-kit-web-hid": "^1.1.0",
     "@rainbow-me/rainbowkit": "^2.2.8",
+    "@selfxyz/common": "^0.0.5",
+    "@selfxyz/core": "^1.0.5-beta.1",
+    "@selfxyz/qrcode": "^1.0.10-beta.1",
     "@tanstack/react-query": "^5.81.5",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "rxjs": "^7.8.2",
     "viem": "^2.31.7",
-    "wagmi": "^2.15.6",
-    "@selfxyz/common": "^0.0.5",
-    "@selfxyz/core": "^1.0.5-beta.1",
-    "@selfxyz/qrcode": "^1.0.10-beta.1"
+    "wagmi": "^2.15.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
