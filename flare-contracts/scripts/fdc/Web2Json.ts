@@ -1,10 +1,28 @@
 import { run, web3 } from "hardhat";
 import { PlayerStatsListInstance } from "../../typechain-types";
 import { prepareAttestationRequestBase, submitAttestationRequest, retrieveDataAndProofBaseWithRetry } from "./Base";
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * Web2Json Script for Player Stats
+ * 
+ * This script can reuse an existing deployed PlayerStatsList contract in several ways:
+ * 
+ * 1. Set PLAYER_STATS_LIST_ADDRESS environment variable:
+ *    PLAYER_STATS_LIST_ADDRESS=0x1234... npm run script:web2json
+ * 
+ * 2. The script will automatically load the address from deployments/player-stats-list.json
+ *    if no environment variable is set
+ * 
+ * 3. If neither is available, the script will deploy a new contract and save its address
+ * 
+ * This prevents unnecessary contract deployments and saves gas costs.
+ */
 
 const PlayerStatsList = artifacts.require("PlayerStatsList");
 
-const { WEB2JSON_VERIFIER_URL_TESTNET, VERIFIER_API_KEY_TESTNET, COSTON2_DA_LAYER_URL } = process.env;
+const { WEB2JSON_VERIFIER_URL_TESTNET, VERIFIER_API_KEY_TESTNET, COSTON2_DA_LAYER_URL, PLAYER_STATS_LIST_ADDRESS } = process.env;
 
 const apiUrl = "https://v3.football.api-sports.io/players";
 const postProcessJq = `{
@@ -57,7 +75,7 @@ const postProcessJq = `{
 const httpMethod = "GET";
 // Defaults to "Content-Type": "application/json"
 const headers = `{"x-rapidapi-host": "v3.football.api-sports.io","x-rapidapi-key": "${process.env.API_FOOTBALL_KEY}"}`;
-const queryParams = JSON.stringify({id : 276, season : 2019});
+const queryParams = JSON.stringify({id : 882, season : 2019});
 const body = "{}";
 const abiSignature = `{
   "name": "playerStats",
@@ -139,6 +157,57 @@ async function retrieveDataAndProof(abiEncodedRequest: string, roundId: number) 
     return await retrieveDataAndProofBaseWithRetry(url, abiEncodedRequest, roundId);
 }
 
+async function loadContractAddressFromFile(): Promise<string | null> {
+    try {
+        const filePath = path.join(__dirname, "../../deployments/player-stats-list.json");
+        if (fs.existsSync(filePath)) {
+            const deploymentInfo = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            console.log("Found saved contract address:", deploymentInfo.address);
+            return deploymentInfo.address;
+        }
+    } catch (error) {
+        console.log("Could not load saved contract address:", error);
+    }
+    return null;
+}
+
+async function getDeployedContract(): Promise<PlayerStatsListInstance> {
+    if (PLAYER_STATS_LIST_ADDRESS) {
+        console.log("Using existing PlayerStatsList contract at:", PLAYER_STATS_LIST_ADDRESS);
+        return await PlayerStatsList.at(PLAYER_STATS_LIST_ADDRESS);
+    } else {
+        // Try to load from saved file
+        const savedAddress = await loadContractAddressFromFile();
+        if (savedAddress) {
+            console.log("Using saved PlayerStatsList contract at:", savedAddress);
+            return await PlayerStatsList.at(savedAddress);
+        } else {
+            console.log("No PLAYER_STATS_LIST_ADDRESS provided and no saved address found, deploying new contract...");
+            return await deployAndVerifyContract();
+        }
+    }
+}
+
+async function saveContractAddress(address: string) {
+    const deploymentInfo = {
+        contractName: "PlayerStatsList",
+        address: address,
+        deployedAt: new Date().toISOString(),
+        network: process.env.NETWORK || "unknown"
+    };
+    
+    const deploymentPath = path.join(__dirname, "../../deployments");
+    if (!fs.existsSync(deploymentPath)) {
+        fs.mkdirSync(deploymentPath, { recursive: true });
+    }
+    
+    const filePath = path.join(deploymentPath, "player-stats-list.json");
+    fs.writeFileSync(filePath, JSON.stringify(deploymentInfo, null, 2));
+    
+    console.log("Contract address saved to:", filePath);
+    console.log("Set PLAYER_STATS_LIST_ADDRESS=" + address + " to reuse this contract");
+}
+
 async function deployAndVerifyContract() {
     const args: any[] = [];
     const characterList: PlayerStatsListInstance = await PlayerStatsList.new(...args);
@@ -150,7 +219,11 @@ async function deployAndVerifyContract() {
     } catch (e: any) {
         console.log(e);
     }
-    console.log("StarWarsCharacterListV2 deployed to", characterList.address, "\n");
+    console.log("PlayerStatsList deployed to", characterList.address, "\n");
+    
+    // Save the contract address for future use
+    await saveContractAddress(characterList.address);
+    
     return characterList;
 }
 
@@ -181,7 +254,8 @@ async function main() {
 
     const proof = await retrieveDataAndProof(abiEncodedRequest, roundId);
 
-    const characterList: PlayerStatsListInstance = await deployAndVerifyContract();
+    // Use existing deployed contract instead of deploying new one
+    const characterList: PlayerStatsListInstance = await getDeployedContract();
 
     await interactWithContract(characterList, proof);
 }

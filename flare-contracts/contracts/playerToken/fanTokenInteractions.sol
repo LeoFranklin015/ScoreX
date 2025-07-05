@@ -37,6 +37,15 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     event UserClaimed(address indexed user, uint256 indexed tokenId, uint256 amount, uint256 tokensBurned);
     event LiquidityWithdrawn(uint256 indexed tokenId, uint256 amount);
     event PriceCalculated(uint256 indexed tokenId, uint256 price, uint256 sold, uint256 multiplier);
+    event PlayerStatsListAddressUpdated(address newAddress);
+    event PlayerVerificationProcessed(
+        uint256 indexed playerId, 
+        address indexed playerAddress, 
+        string firstName, 
+        string lastName, 
+        string dateOfBirth,
+        uint256 amountSent
+    );
 
     // Errors
     error PlayerAlreadyMinted();
@@ -54,6 +63,8 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     error SeasonStillActive();
     error TokenContractNotSet();
     error ZeroAddress();
+    error InvalidPlayerStatsListAddress();
+    error PlayerVerificationFailed();
 
     constructor(address _fanBondToken)  Ownable(msg.sender){
         if (_fanBondToken == address(0)) revert ZeroAddress();
@@ -100,12 +111,6 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     // Address of the PlayerStatsList contract
     address public playerStatsListAddress;
 
-    // Events
-    event PlayerStatsListAddressUpdated(address newAddress);
-
-    // Errors
-    error InvalidPlayerStatsListAddress();
-
     /**
      * @notice Sets the address of the PlayerStatsList contract
      * @param _playerStatsListAddress Address of the PlayerStatsList contract
@@ -126,7 +131,8 @@ contract FanBondGame is Ownable, ReentrancyGuard {
             return 1e18; // Default to 1.0x if no stats contract is set
         }
         
-        try PlayerStatsList(playerStatsListAddress).getCalculatedPerformance(tokenId) returns (uint8 performanceScore) {
+        try PlayerStatsList(playerStatsListAddress)
+            .getCalculatedPerformance(tokenId) returns (uint8 performanceScore) {
             // Scale the performance score (1-10) to 18 decimals
             // Example: score of 5 becomes 0.5e18, score of 10 becomes 1.0e18
             return uint256(performanceScore) * 1e17;
@@ -318,6 +324,105 @@ contract FanBondGame is Ownable, ReentrancyGuard {
             totalUserTokens[to] += amount;
             hasMintedPlayer[to][tokenId] = true;
         }
+    }
+
+    /**
+     * @notice Processes player verification event and sends 20% share to player address
+     * @param playerId The player ID from the verification event
+     * @param playerAddress The player's wallet address
+     * @param firstName Player's first name from verification
+     * @param lastName Player's last name from verification  
+     * @param dateOfBirth Player's date of birth in format "DD-MM-YY"
+     */
+    function processPlayerVerification(
+        uint256 playerId,
+        address playerAddress,
+        string calldata firstName,
+        string calldata lastName,
+        string calldata dateOfBirth
+    ) external nonReentrant {
+        if (playerStatsListAddress == address(0)) revert InvalidPlayerStatsListAddress();
+        if (!fanBondToken.playerTokenExists(playerId)) revert PlayerNotExists();
+        
+        // Get player stats from Web2Json contract
+        PlayerStats[] memory playerStats = PlayerStatsList(playerStatsListAddress).getPlayerStats(playerId);
+        if (playerStats.length == 0) revert PlayerVerificationFailed();
+        
+        
+        // Compare first name (case insensitive)
+        
+        // Compare date of birth
+        // Stats format: "1992-02-05", Verification format: "05-02-92"
+        
+        // Send 20% share regardless of match results (as requested)
+        uint256 totalLiquidity = liquidity[playerId];
+        uint256 playerShare = (totalLiquidity * 20) / 100;
+        
+        if (playerShare > 0) {
+            payable(playerAddress).transfer(playerShare);
+        }
+        
+        emit PlayerVerificationProcessed(
+            playerId, 
+            playerAddress, 
+            firstName, 
+            lastName, 
+            dateOfBirth,
+            playerShare
+        );
+    }
+    
+    /**
+     * @notice Converts string to lowercase
+     * @param str Input string
+     * @return Lowercase string
+     */
+    function _toLower(string memory str) internal pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint i = 0; i < bStr.length; i++) {
+            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+            } else {
+                bLower[i] = bStr[i];
+            }
+        }
+        return string(bLower);
+    }
+    
+    /**
+     * @notice Compares two strings
+     * @param a First string
+     * @param b Second string
+     * @return True if strings match
+     */
+    function _compareStrings(string memory a, string memory b) internal pure returns (bool) {
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
+    
+    /**
+     * @notice Compares date of birth formats
+     * @param statsDob Stats format: "1992-02-05"
+     * @param verificationDob Verification format: "05-02-92"
+     * @return True if month, day, and last two digits of year match
+     */
+    function _compareDateOfBirth(string memory statsDob, string memory verificationDob) internal pure returns (bool) {
+        bytes memory statsBytes = bytes(statsDob);
+        bytes memory verificationBytes = bytes(verificationDob);
+        
+        // Check minimum length requirements
+        if (statsBytes.length < 10 || verificationBytes.length < 8) return false;
+        
+        // Compare month: stats[5-6] vs verification[3-4]
+        if (statsBytes[5] != verificationBytes[3] || statsBytes[6] != verificationBytes[4]) return false;
+        
+        // Compare day: stats[8-9] vs verification[0-1]
+        if (statsBytes[8] != verificationBytes[0] || statsBytes[9] != verificationBytes[1]) return false;
+        
+        // Compare last two digits of year: stats[2-3] vs verification[6-7]
+        if (statsBytes[2] != verificationBytes[6] || statsBytes[3] != verificationBytes[7]) return false;
+        
+        return true;
     }
 
     receive() external payable {}
