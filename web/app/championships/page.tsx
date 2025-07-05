@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 interface Star {
-  id: number
-  x: number
-  y: number
-  speed: number
-  type: number
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+  type: number;
 }
 
 export default function ChampionshipsLanding() {
-  const [stars, setStars] = useState<Star[]>([])
-  const backgroundRef = useRef<HTMLDivElement>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [stars, setStars] = useState<Star[]>([]);
+  const backgroundRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     // Generate random stars
     const generateStars = () => {
-      const starCount = 200
-      const newStars: Star[] = []
+      const starCount = 200;
+      const newStars: Star[] = [];
 
       for (let i = 0; i < starCount; i++) {
         newStars.push({
@@ -29,14 +29,14 @@ export default function ChampionshipsLanding() {
           y: Math.random() * window.innerHeight,
           speed: Math.floor(Math.random() * 5) + 1,
           type: Math.floor(Math.random() * 10) + 1,
-        })
+        });
       }
 
-      setStars(newStars)
-    }
+      setStars(newStars);
+    };
 
-    generateStars()
-    setIsLoaded(true)
+    generateStars();
+    setIsLoaded(true);
 
     // Animate stars
     const animateStars = () => {
@@ -44,14 +44,14 @@ export default function ChampionshipsLanding() {
         prevStars.map((star) => ({
           ...star,
           x: star.x <= 0 ? window.innerWidth - 10 : star.x - star.speed,
-        })),
-      )
-    }
+        }))
+      );
+    };
 
-    const interval = setInterval(animateStars, 1000 / 60)
+    const interval = setInterval(animateStars, 1000 / 60);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="championships-container">
@@ -101,7 +101,9 @@ export default function ChampionshipsLanding() {
             <li className="flag-slide-right">
               <div className="flag flag-ire"></div>
             </li>
-            <li className="match-info">MONDAY June 13, 18:00 @ Stade de France</li>
+            <li className="match-info">
+              MONDAY June 13, 18:00 @ Stade de France
+            </li>
           </ul>
         </div>
 
@@ -110,5 +112,5 @@ export default function ChampionshipsLanding() {
         <h1 className="title animated-text">CHAMPIONSHIPS</h1>
       </div>
     </div>
-  )
+  );
 }

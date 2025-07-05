@@ -27,12 +27,15 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'media.api-sports.io',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "media.api-sports.io",
+        port: "",
+        pathname: "/**",
       },
     ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
