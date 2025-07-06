@@ -50,22 +50,13 @@ import {
   PLAYER_LIST_CONTRACT_ADDRESS,
 } from "../lib/const";
 
-type SelectionStep = "league" | "team" | "player";
-
 export default function Mint() {
-  const [currentStep, setCurrentStep] = useState<SelectionStep>("league");
-  const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [bondAmount, setBondAmount] = useState([1000]);
 
-  const [leagues, setLeagues] = useState<League[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
 
-  const [loadingLeagues, setLoadingLeagues] = useState(true);
-  const [loadingTeams, setLoadingTeams] = useState(false);
-  const [loadingPlayers, setLoadingPlayers] = useState(false);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Profile card state
@@ -93,117 +84,125 @@ export default function Mint() {
   } = useMintedPlayers();
 
   useEffect(() => {
-    fetchLeagues();
     fetchPlayersFromContract();
   }, []);
 
-  const fetchLeagues = async () => {
-    try {
-      setLoadingLeagues(true);
-      setError(null);
-
-      const response = await fetch("/api/leagues");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch leagues");
-      }
-
-      const data = await response.json();
-      setLeagues(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load leagues");
-      console.error("Error fetching leagues:", err);
-    } finally {
-      setLoadingLeagues(false);
-    }
-  };
-
-  const fetchTeams = async (leagueId: number) => {
-    try {
-      setLoadingTeams(true);
-      setError(null);
-
-      const response = await fetch(`/api/teams?league=${leagueId}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch teams");
-      }
-
-      const data = await response.json();
-      console.log("📋 Teams API response:", data);
-      setTeams(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load teams");
-      console.error("Error fetching teams:", err);
-    } finally {
-      setLoadingTeams(false);
-    }
-  };
-
   const fetchPlayersFromContract = async () => {
-    const players = await publicClient.readContract({
-      abi: PLAYER_LIST_CONTRACT_ABI,
-      address: PLAYER_LIST_CONTRACT_ADDRESS,
-      functionName: "getAllPlayerIds",
-      args: [],
-    });
-    console.log("📋 Players from contract:", players);
-  };
-
-  const fetchPlayers = async (teamId: number, leagueId: number) => {
     try {
       setLoadingPlayers(true);
       setError(null);
 
-      const response = await fetch(
-        `/api/players?team=${teamId}&league=${leagueId}`
-      );
+      // Fetch player IDs from contract
+      const playerIds = await publicClient.readContract({
+        abi: PLAYER_LIST_CONTRACT_ABI,
+        address: PLAYER_LIST_CONTRACT_ADDRESS,
+        functionName: "getAllPlayerIds",
+        args: [],
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch players");
-      }
+      console.log("📋 Player IDs from contract:", playerIds);
 
-      const data = await response.json();
-      const playersData = Array.isArray(data) ? data : [];
-      setPlayers(playersData);
+      // Convert BigInt array to number array
+      const playerIdNumbers = (playerIds as bigint[]).map((id: bigint) => Number(id));
+      console.log("📋 Converted player IDs:", playerIdNumbers);
 
-      // Initialize random token counts for players (simulating marketplace activity)
-      const newTokenCounts: Record<number, number> = {};
-      playersData.forEach((player) => {
-        if (!playerTokenCounts[player.id]) {
-          // Generate random token availability (20-100 to simulate marketplace activity)
-          const availableTokens = Math.floor(Math.random() * 81) + 20; // 20-100
-          newTokenCounts[player.id] = availableTokens;
+      // Fetch player details for each ID
+      const playerPromises = playerIdNumbers.map(async (playerId: number) => {
+        try {
+          const response = await fetch(`/api/players?id=${playerId}`);
+          if (!response.ok) {
+            console.warn(`Failed to fetch player ${playerId}`);
+            return null;
+          }
+          const playerStatsData = await response.json();
+          
+          // Convert PlayerStats to Player format
+          if (playerStatsData && playerStatsData.player && playerStatsData.statistics && playerStatsData.statistics.length > 0) {
+            // Use the first statistics entry (usually the most relevant one)
+            const stats = playerStatsData.statistics[0];
+            
+            const player: Player = {
+              id: playerStatsData.player.id,
+              name: playerStatsData.player.name,
+              team: stats.team?.name || 'Unknown',
+              position: stats.games?.position || 'Unknown',
+              goals: stats.goals?.total || 0,
+              assists: stats.goals?.assists || 0,
+              value: 50000000, // Default value
+              popularity: 75, // Default popularity
+              avatar: playerStatsData.player.photo || '/placeholder.svg?height=64&width=64',
+              photo: playerStatsData.player.photo || '/placeholder.svg?height=64&width=64',
+              nationality: playerStatsData.player.nationality || 'Unknown',
+              age: playerStatsData.player.age || 25,
+              market_value: 50000000, // Default market value
+              current_season_stats: {
+                goals: stats.goals?.total || 0,
+                assists: stats.goals?.assists || 0,
+                appearances: stats.games?.appearences || 0,
+                rating: parseFloat(stats.games?.rating) || 0
+              }
+            };
+            
+            return player;
+          }
+          
+          return null;
+        } catch (err) {
+          console.warn(`Error fetching player ${playerId}:`, err);
+          return null;
         }
       });
+
+      const playerResults = await Promise.all(playerPromises);
+      const validPlayers = playerResults.filter((player: Player | null): player is Player => player !== null);
+      
+      console.log("📋 Fetched players:", validPlayers);
+      setPlayers(validPlayers);
+
+      // Fetch token sales from contract for each player
+      const tokenSalesPromises = validPlayers.map(async (player: Player) => {
+        try {
+          const tokensSold = await publicClient.readContract({
+            abi: CURVE_LEAGUE_CONTRACT_ABI,
+            address: CURVE_LEAGUE_CONTRACT_ADDRESS,
+            functionName: "tokensSold",
+            args: [BigInt(player.id)],
+          }) as bigint;
+          
+          return {
+            playerId: player.id,
+            tokensSold: Number(tokensSold)
+          };
+        } catch (err) {
+          console.warn(`Error fetching token sales for player ${player.id}:`, err);
+          return {
+            playerId: player.id,
+            tokensSold: 0
+          };
+        }
+      });
+
+      const tokenSalesResults = await Promise.all(tokenSalesPromises);
+      const newTokenCounts: Record<number, number> = {};
+      
+      tokenSalesResults.forEach(({ playerId, tokensSold }) => {
+        // Calculate available tokens (100 - tokens sold)
+        const availableTokens = Math.max(0, 100 - tokensSold);
+        newTokenCounts[playerId] = availableTokens;
+      });
+
+      console.log("📋 Token sales data:", tokenSalesResults);
+      console.log("📋 Available tokens:", newTokenCounts);
 
       if (Object.keys(newTokenCounts).length > 0) {
         setPlayerTokenCounts((prev) => ({ ...prev, ...newTokenCounts }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load players");
-      console.error("Error fetching players:", err);
+      setError(err instanceof Error ? err.message : "Failed to load players from contract");
+      console.error("Error fetching players from contract:", err);
     } finally {
       setLoadingPlayers(false);
     }
-  };
-
-  const handleLeagueSelect = (league: League) => {
-    setSelectedLeague(league);
-    setSelectedTeam(null);
-    setSelectedPlayer(null);
-    setCurrentStep("team");
-    fetchTeams(league.id);
-  };
-
-  const handleTeamSelect = (team: Team) => {
-    setSelectedTeam(team);
-    setSelectedPlayer(null);
-    setCurrentStep("player");
-    fetchPlayers(team.id, selectedLeague!.id);
-    // Update aurora colors based on selected team
-    const teamColors = getEnhancedAuroraColors(team.name);
-    setAuroraColors(teamColors);
   };
 
   const handlePlayerSelect = (player: Player) => {
@@ -261,19 +260,6 @@ export default function Mint() {
     return isMinted(playerId);
   };
 
-  const handleBackToLeague = () => {
-    setCurrentStep("league");
-    setSelectedLeague(null);
-    setSelectedTeam(null);
-    setSelectedPlayer(null);
-  };
-
-  const handleBackToTeam = () => {
-    setCurrentStep("team");
-    setSelectedTeam(null);
-    setSelectedPlayer(null);
-  };
-
   const projectedReward = Math.floor(bondAmount[0] * 0.15);
   const bondPower = Math.floor(bondAmount[0] / 100);
 
@@ -286,220 +272,35 @@ export default function Mint() {
     }).format(value);
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      <div className="flex items-center space-x-4">
-        <div
-          className={`flex items-center space-x-2 ${
-            currentStep === "league"
-              ? "text-lime-400"
-              : selectedLeague
-              ? "text-zinc-300"
-              : "text-zinc-600"
-          }`}
-        >
-          <Trophy className="h-5 w-5" />
-          <span className="pixel-font">League</span>
-        </div>
-        <ArrowRight className="h-4 w-4 text-zinc-500" />
-        <div
-          className={`flex items-center space-x-2 ${
-            currentStep === "team"
-              ? "text-lime-400"
-              : selectedTeam
-              ? "text-zinc-300"
-              : "text-zinc-600"
-          }`}
-        >
-          <Users className="h-5 w-5" />
-          <span className="pixel-font">Team</span>
-        </div>
-        <ArrowRight className="h-4 w-4 text-zinc-500" />
-        <div
-          className={`flex items-center space-x-2 ${
-            currentStep === "player"
-              ? "text-lime-400"
-              : selectedPlayer
-              ? "text-zinc-300"
-              : "text-zinc-600"
-          }`}
-        >
-          <User className="h-5 w-5" />
-          <span className="pixel-font">Player</span>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderLeagueSelection = () => (
-    <Card className="glitch-border bg-zinc-900/50">
-      <CardHeader>
-        <CardTitle className="pixel-font text-lime-400">
-          Select League
-        </CardTitle>
-        <CardDescription>Choose your preferred football league</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loadingLeagues ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-lime-400" />
-            <span className="ml-2 text-zinc-400">Loading leagues...</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {leagues.map((league) => (
-              <Card
-                key={league.id}
-                className="cursor-pointer hover-pulse transition-all border-zinc-700 hover:border-lime-400"
-                onClick={() => handleLeagueSelect(league)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
-                      {league.logo ? (
-                        <img
-                          src={league.logo}
-                          alt={`${league.name} logo`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            e.currentTarget.nextElementSibling?.classList.remove(
-                              "hidden"
-                            );
-                          }}
-                        />
-                      ) : (
-                        <Trophy className="h-6 w-6 text-lime-400" />
-                      )}
-                      <Trophy className="h-6 w-6 text-lime-400 hidden" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-white">{league.name}</div>
-                      <div className="text-sm text-zinc-400">
-                        {league.country}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const renderTeamSelection = () => (
-    <Card className="glitch-border bg-zinc-900/50">
-      <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToLeague}
-            className="text-zinc-400 hover:text-lime-400"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <CardTitle className="pixel-font text-lime-400">
-              Select Team
-            </CardTitle>
-            <CardDescription>
-              Choose your team from {selectedLeague?.name}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loadingTeams ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-lime-400" />
-            <span className="ml-2 text-zinc-400">Loading teams...</span>
-          </div>
-        ) : teams.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Users className="h-12 w-12 text-zinc-600 mb-4" />
-            <p className="text-zinc-400 text-center">
-              No teams found for {selectedLeague?.name}
-            </p>
-            <Button
-              variant="ghost"
-              onClick={() => fetchTeams(selectedLeague?.id || 39)}
-              className="mt-2 text-lime-400 hover:text-lime-300"
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teams.map((team) => (
-              <Card
-                key={team.id}
-                className="cursor-pointer hover-pulse transition-all border-zinc-700 hover:border-fuchsia-500"
-                onClick={() => handleTeamSelect(team)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
-                      {team.logo ? (
-                        <img
-                          src={team.logo}
-                          alt={`${team.name} logo`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            e.currentTarget.nextElementSibling?.classList.remove(
-                              "hidden"
-                            );
-                          }}
-                        />
-                      ) : (
-                        <Users className="h-6 w-6 text-fuchsia-500" />
-                      )}
-                      <Users className="h-6 w-6 text-fuchsia-500 hidden" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-white">{team.name}</div>
-                      <div className="text-sm text-zinc-400">{team.venue}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   const renderPlayerSelection = () => (
     <Card className="glitch-border bg-zinc-900/50">
       <CardHeader>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToTeam}
-            className="text-zinc-400 hover:text-lime-400"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <CardTitle className="pixel-font text-lime-400">
-              Select Player
-            </CardTitle>
-            <CardDescription>
-              Choose your player from {selectedTeam?.name}
-            </CardDescription>
-          </div>
-        </div>
+        <CardTitle className="pixel-font text-lime-400">
+          Select Player
+        </CardTitle>
+        <CardDescription>
+          Choose your player from the available pool
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {loadingPlayers ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-lime-400" />
             <span className="ml-2 text-zinc-400">Loading players...</span>
+          </div>
+        ) : players.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <User className="h-12 w-12 text-zinc-600 mb-4" />
+            <p className="text-zinc-400 text-center">
+              No players found in the contract
+            </p>
+            <Button
+              variant="ghost"
+              onClick={fetchPlayersFromContract}
+              className="mt-2 text-lime-400 hover:text-lime-300"
+            >
+              Try Again
+            </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -559,7 +360,7 @@ export default function Mint() {
                     </div>
                     <div className="text-center">
                       <div className="text-purple-400 font-bold">
-                        {player.current_season_stats.rating.toFixed(1)}
+                        {player.current_season_stats?.rating?.toFixed(1) || '0.0'}
                       </div>
                       <div className="text-zinc-400">Rating</div>
                     </div>
@@ -582,6 +383,22 @@ export default function Mint() {
                     >
                       {getAvailableTokens(player.id)}/100
                     </span>
+                  </div>
+
+                  {/* Token Sales Progress Bar */}
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                      <span>Sold: {100 - getAvailableTokens(player.id)}</span>
+                      <span>Available: {getAvailableTokens(player.id)}</span>
+                    </div>
+                    <div className="w-full bg-zinc-700 rounded-full h-2">
+                      <div
+                        className="bg-lime-400 h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${getAvailableTokens(player.id)}%`,
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {hasUserMinted(player.id) && (
@@ -633,7 +450,7 @@ export default function Mint() {
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 mb-4">
             <p className="text-red-400 mb-4">Error: {error}</p>
             <Button
-              onClick={fetchLeagues}
+              onClick={fetchPlayersFromContract}
               className="bg-lime-400 text-zinc-950 hover:bg-lime-500"
             >
               Try Again
@@ -661,18 +478,14 @@ export default function Mint() {
           Mint Bond
         </h1>
         <p className="text-zinc-400">
-          Select your league, team, and player to mint your fantasy bond.
+          Select your player to mint your fantasy bond.
         </p>
       </div>
-
-      {renderStepIndicator()}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Selection Area */}
         <div className="lg:col-span-2">
-          {currentStep === "league" && renderLeagueSelection()}
-          {currentStep === "team" && renderTeamSelection()}
-          {currentStep === "player" && renderPlayerSelection()}
+          {renderPlayerSelection()}
         </div>
 
         {/* Bond Configuration */}
@@ -730,23 +543,23 @@ export default function Mint() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-zinc-400">League:</span>
-                <span className="text-white">
-                  {selectedLeague?.name || "Not selected"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Team:</span>
-                <span className="text-white">
-                  {selectedTeam?.name || "Not selected"}
-                </span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-zinc-400">Player:</span>
                 <span className="text-white">
                   {selectedPlayer?.name || "Not selected"}
                 </span>
               </div>
+              {selectedPlayer && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Team:</span>
+                    <span className="text-white">{selectedPlayer.team}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Position:</span>
+                    <span className="text-white">{selectedPlayer.position}</span>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -815,7 +628,7 @@ export default function Mint() {
                     {selectedPlayer?.name}
                   </div>
                   <div className="text-sm text-zinc-500">
-                    {selectedTeam?.name} • {selectedLeague?.name}
+                    {selectedPlayer?.team} • {selectedPlayer?.position}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -851,7 +664,7 @@ export default function Mint() {
                     </div>
                     <div className="text-center">
                       <div className="text-purple-400 font-bold">
-                        {selectedPlayer?.current_season_stats.rating.toFixed(1)}
+                        {selectedPlayer?.current_season_stats?.rating?.toFixed(1) || '0.0'}
                       </div>
                       <div className="text-xs text-zinc-400">Rating</div>
                     </div>
@@ -915,9 +728,9 @@ export default function Mint() {
                     .replace(/\s+/g, "")}
                   status={`${selectedPlayerForProfile.goals}G • ${
                     selectedPlayerForProfile.assists
-                  }A • ${selectedPlayerForProfile.current_season_stats.rating.toFixed(
+                  }A • ${selectedPlayerForProfile.current_season_stats?.rating?.toFixed(
                     1
-                  )}⭐`}
+                  ) || '0.0'}⭐`}
                   contactText={
                     hasUserMinted(selectedPlayerForProfile.id)
                       ? "Already Minted"
@@ -974,9 +787,13 @@ export default function Mint() {
                             /100
                           </span>
                         </div>
-                        <div className="w-full bg-zinc-700 rounded-full h-2">
+                        <div className="flex justify-between text-sm text-zinc-400">
+                          <span>Sold: {100 - getAvailableTokens(selectedPlayerForProfile.id)}</span>
+                          <span>Available: {getAvailableTokens(selectedPlayerForProfile.id)}</span>
+                        </div>
+                        <div className="w-full bg-zinc-700 rounded-full h-3">
                           <div
-                            className="bg-lime-400 h-2 rounded-full transition-all duration-300"
+                            className="bg-lime-400 h-3 rounded-full transition-all duration-300"
                             style={{
                               width: `${getAvailableTokens(
                                 selectedPlayerForProfile.id
@@ -1014,9 +831,7 @@ export default function Mint() {
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-400">
-                            {selectedPlayerForProfile.current_season_stats.rating.toFixed(
-                              1
-                            )}
+                            {selectedPlayerForProfile.current_season_stats?.rating?.toFixed(1) || '0.0'}
                           </div>
                           <div className="text-sm text-zinc-400">Rating</div>
                         </div>

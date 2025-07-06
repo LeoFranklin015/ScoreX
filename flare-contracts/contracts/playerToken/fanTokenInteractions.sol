@@ -39,6 +39,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     event PriceCalculated(uint256 indexed tokenId, uint256 price, uint256 sold, uint256 multiplier);
     event PlayerStatsListAddressUpdated(address newAddress);
     event PlayerVerificationProcessed(
+        
         uint256 indexed playerId, 
         address indexed playerAddress, 
         string firstName, 

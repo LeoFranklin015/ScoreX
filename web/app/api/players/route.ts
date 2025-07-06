@@ -4,20 +4,21 @@ import { footballAPI } from '../../lib/football-api'
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const team = searchParams.get('team')
-    const league = searchParams.get('league')
-    const id = searchParams.get('id')
 
+    const id = searchParams.get('id')
+    console.log(id)
     // Get specific player stats
     if (id) {
-      const playerStats = await footballAPI.getPlayerStats(parseInt(id))
-      return NextResponse.json(playerStats)
-    }
-
-    // Get players by team
-    if (team && league) {
-      const players = await footballAPI.getPlayersByTeam(parseInt(team), parseInt(league))
-      return NextResponse.json(players)
+      const playerStats = await fetch(`https://v3.football.api-sports.io/players?id=${id}&season=2019`, {
+        headers: {
+          'x-apisports-key': "cbb21f9359defd28350ffdeeb943e5d7",
+          "x-rapidapi-host": "v3.football.api-sports.io",
+        }
+      })
+      const data = await playerStats.json()
+      console.log(data.response[0])
+      console.log(JSON.stringify(data.response[0], null, 2))
+      return NextResponse.json(data.response[0])
     }
 
     // Get top players (default)

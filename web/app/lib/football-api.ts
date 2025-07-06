@@ -363,7 +363,7 @@ class FootballAPI {
 
   async getPlayerStats(playerId: number): Promise<PlayerStats[]> {
     try {
-      const response = await this.makeRequest(`/players?id=${playerId}&season=2024`)
+      const response = await this.makeRequest(`/players?id=${playerId}&season=2019`)
       
       // Map API response to PlayerStats interface
       const playerStats: PlayerStats[] = response.response.map((item: any) => {

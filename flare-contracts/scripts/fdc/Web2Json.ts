@@ -75,7 +75,7 @@ const postProcessJq = `{
 const httpMethod = "GET";
 // Defaults to "Content-Type": "application/json"
 const headers = `{"x-rapidapi-host": "v3.football.api-sports.io","x-rapidapi-key": "${process.env.API_FOOTBALL_KEY}"}`;
-const queryParams = JSON.stringify({id : 882, season : 2019});
+const queryParams = JSON.stringify({id : 2, season : 2019});
 const body = "{}";
 const abiSignature = `{
   "name": "playerStats",
