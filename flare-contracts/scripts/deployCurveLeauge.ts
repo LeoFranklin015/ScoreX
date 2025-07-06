@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 async function main() {
     // Set the deployed FanBondToken address here
-    const fanBondTokenAddress = "0xC6d1390BA3C99ac4d83b19F898ecf396Aa868C29";
+    const fanBondTokenAddress = "0x2a1948F3BF214779ee7F76d3Eb982dd12D088683";
 
     // Get the contract factory for FanBondGame (from fanTokenInteractions.sol)
     const FanBondGame = await ethers.getContractFactory("FanBondGame");

@@ -150,13 +150,16 @@ export default function Mint() {
   useEffect(() => {
     if (mintLoading) {
       setModalOpen(true);
-    } else if (stepStatus["done"] === "done") {
+    } else if (
+      stepStatus["done"] === "done" &&
+      !mintError &&
+      !signTransactionError
+    ) {
+      // Only auto-close if successful and no error
       const timeout = setTimeout(() => setModalOpen(false), 10000);
       return () => clearTimeout(timeout);
-    } else if (!mintLoading) {
-      setModalOpen(false);
-    }
-  }, [mintLoading, stepStatus["done"]]);
+    } // else: do not auto-close if error
+  }, [mintLoading, stepStatus["done"], mintError, signTransactionError]);
 
   const fetchPlayersFromContract = async () => {
     try {
@@ -578,7 +581,9 @@ export default function Mint() {
     try {
       // 1. Fetch price
       updateStep("fetchPrice", "in_progress");
-      const freshPrice = await fetchPrice(selectedPlayerForProfile.id);
+
+      const freshPrice = await fetchPrice(1);
+      console.log(freshPrice);
       if (!freshPrice) throw new Error("Failed to fetch price");
       updateStep("fetchPrice", "done");
       setCurrentStep("fetchNonce");
@@ -589,15 +594,13 @@ export default function Mint() {
         "https://coston2-api.flare.network/ext/C/rpc"
       );
       const n = await provider.getTransactionCount(address);
+      console.log(n);
       updateStep("fetchNonce", "done");
       setCurrentStep("buildTx");
       // 3. Build unsigned tx
       updateStep("buildTx", "in_progress");
       const iface = new ethers.Interface(CURVE_LEAGUE_CONTRACT_ABI);
-      const data = iface.encodeFunctionData("mintPlayer", [
-        BigInt(selectedPlayerForProfile.id),
-        BigInt(nullifier || 0),
-      ]);
+      const data = iface.encodeFunctionData("mintPlayer", [BigInt(1)]);
       const tx = {
         to: CURVE_LEAGUE_CONTRACT_ADDRESS,
         value: freshPrice,
@@ -621,13 +624,13 @@ export default function Mint() {
           setSignTransactionState,
           (output: any) => {
             setSignTransactionOutput(output);
+            const { v, r, s } = output || {};
+
             updateStep("sign", "done");
             setCurrentStep("broadcast");
             // 5. Broadcast immediately after signature
             updateStep("broadcast", "in_progress");
             try {
-              const { v, r, s } = output || {};
-              if (!v || !r || !s) throw new Error("No signature from Ledger");
               const signedTxHex = ethers.Transaction.from({
                 ...tx,
                 signature: { v, r, s },
@@ -638,19 +641,19 @@ export default function Mint() {
                   updateStep("broadcast", "done");
                   setCurrentStep("done");
                   updateStep("done", "done");
-                  resolve();
+                  // resolve();
                 })
                 .catch((err) => {
                   updateStep("broadcast", "error", err.message || String(err));
                   setMintError(err);
                   setCurrentStep("broadcast");
-                  reject(err);
+                  // reject(err);
                 });
             } catch (err: any) {
               updateStep("broadcast", "error", err.message || String(err));
               setMintError(err);
               setCurrentStep("broadcast");
-              reject(err);
+              // reject(err);
             }
           },
           (err: any) => {
@@ -658,7 +661,7 @@ export default function Mint() {
             updateStep("sign", "error", err.message || String(err));
             setMintError(err);
             setCurrentStep("sign");
-            reject(err);
+            // reject(err);
           }
         );
       });
@@ -1184,24 +1187,58 @@ export default function Mint() {
                           ? "Sold Out"
                           : "Mint Token"}
                       </StarBorder>
-                      <Dialog open={modalOpen}>
+                      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                         <DialogContent>
-                          <div className="flex flex-col items-center justify-center min-h-[200px]">
+                          <div className="flex flex-col items-center justify-center min-h-[200px] w-full">
                             <div className="mb-4 animate-spin rounded-full border-4 border-lime-400 border-t-transparent h-12 w-12" />
                             <MintStepper />
-                            {stepStatus["done"] === "done" && broadcastHash && (
-                              <div className="mt-4 text-xs text-zinc-400">
-                                This will close in 10 seconds. Copy your Tx Hash
-                                if needed.
+                            {/* Show all errors, not just broadcast */}
+                            {(mintError ||
+                              signTransactionError ||
+                              Object.values(stepError).some(Boolean)) && (
+                              <div className="mt-4 text-xs text-red-400 break-all w-full">
+                                <div className="font-bold mb-1">Error:</div>
+                                {mintError && (
+                                  <div className="mb-1">
+                                    {typeof mintError === "object"
+                                      ? JSON.stringify(mintError, null, 2)
+                                      : String(mintError)}
+                                  </div>
+                                )}
+                                {signTransactionError && (
+                                  <div className="mb-1">
+                                    {typeof signTransactionError === "object"
+                                      ? JSON.stringify(
+                                          signTransactionError,
+                                          null,
+                                          2
+                                        )
+                                      : String(signTransactionError)}
+                                  </div>
+                                )}
+                                {Object.entries(stepError).map(([step, err]) =>
+                                  err ? (
+                                    <div key={step} className="mb-1">
+                                      {step}: {err}
+                                    </div>
+                                  ) : null
+                                )}
+                                <Button
+                                  className="mt-4 w-full"
+                                  variant="outline"
+                                  onClick={() => setModalOpen(false)}
+                                >
+                                  Close
+                                </Button>
                               </div>
                             )}
-                            {stepStatus["broadcast"] === "error" &&
-                              mintError && (
-                                <div className="mt-4 text-xs text-red-400 break-all">
-                                  Broadcast Error:{" "}
-                                  {typeof mintError === "object"
-                                    ? JSON.stringify(mintError, null, 2)
-                                    : String(mintError)}
+                            {stepStatus["done"] === "done" &&
+                              broadcastHash &&
+                              !mintError &&
+                              !signTransactionError && (
+                                <div className="mt-4 text-xs text-zinc-400">
+                                  This will close in 10 seconds. Copy your Tx
+                                  Hash if needed.
                                 </div>
                               )}
                           </div>

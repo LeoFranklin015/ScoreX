@@ -79,12 +79,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         seasonEnded = false;
         // Pre-register 2 players
         fanBondToken.addPlayer(1, 0x38b09fF7F662D02402397653766ed795F9FD8f25);
-        fanBondToken.addPlayer(2, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
-        fanBondToken.addPlayer(275, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
         fanBondToken.addPlayer(276, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
-        fanBondToken.addPlayer(274, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
-        fanBondToken.addPlayer(20319, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
-        fanBondToken.addPlayer(882, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
     }
 
     function initializeSeason(uint256[] calldata _playerIds) external onlyOwner {
@@ -150,12 +145,12 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         }
     }
 
-    function mintPlayer(uint256 tokenId, uint256 nullifier) external payable nonReentrant {
-        if (!seasonActive) revert SeasonNotActive();
-        if (!fanBondToken.playerTokenExists(tokenId)) revert PlayerNotExists();
-        if (hasMintedPlayer[msg.sender][tokenId]) revert PlayerAlreadyMinted();
-        if (totalUserTokens[msg.sender] >= MAX_USER_TOKENS) revert MaxTokensReached();
-        if (tokensSold[tokenId] >= fanBondToken.MAX_TOKENS_PER_PLAYER()) revert PlayerSoldOut();
+    function mintPlayer(uint256 tokenId) external payable nonReentrant {
+        // if (!seasonActive) revert SeasonNotActive();
+        // if (!fanBondToken.playerTokenExists(tokenId)) revert PlayerNotExists();
+        // if (hasMintedPlayer[msg.sender][tokenId]) revert PlayerAlreadyMinted();
+        // if (totalUserTokens[msg.sender] >= MAX_USER_TOKENS) revert MaxTokensReached();
+        // if (tokensSold[tokenId] >= fanBondToken.MAX_TOKENS_PER_PLAYER()) revert PlayerSoldOut();
 
         uint256 price = getPrice(tokenId);
         if (msg.value < price) revert InsufficientPayment();
@@ -165,8 +160,6 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         totalUserTokens[msg.sender]++;
         liquidity[tokenId] += price;
         
-        // Store the nullifier for the user
-        userNullifiers[msg.sender] = nullifier;
 
         fanBondToken.mintTokens(msg.sender, tokenId, 1);
 
@@ -176,7 +169,6 @@ contract FanBondGame is Ownable, ReentrancyGuard {
 
         emit PlayerMinted(msg.sender, tokenId, price, currentSeason);
         emit PriceCalculated(tokenId, price, tokensSold[tokenId], getPerformanceMultiplier(tokenId));
-        emit NullifierStored(msg.sender, nullifier);
     }
 
     function playerClaim(uint256 tokenId) external nonReentrant {
