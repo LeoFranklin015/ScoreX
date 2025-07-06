@@ -4,6 +4,7 @@ import { Orbitron } from "next/font/google"
 import "./globals.css";
 import { LedgerProvider } from "./components/Provider";
 import { MintedPlayersProvider } from "./lib/minted-players-context";
+import { VerificationProvider } from "./lib/verification-context";
 import { Navbar } from "./components/navbar";
 
 const inter = Inter({ subsets: ["latin"] })
@@ -28,9 +29,11 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <LedgerProvider>
       <MintedPlayersProvider>
+        <VerificationProvider>
           <body className={`${inter.className} ${orbitron.variable} bg-zinc-950 text-zinc-100 min-h-screen`}>
           {children}
         </body>
+        </VerificationProvider>
         </MintedPlayersProvider>
       </LedgerProvider>
     </html>

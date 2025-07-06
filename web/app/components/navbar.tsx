@@ -6,16 +6,20 @@ import { usePathname } from "next/navigation"
 import { Button } from "../components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu"
-import { Wallet, User, LogOut } from "lucide-react"
+import { Badge } from "../components/ui/badge"
+import { Wallet, User, LogOut, Shield } from "lucide-react"
+import { useVerification } from "../lib/verification-context"
 
 export function Navbar() {
   const pathname = usePathname()
   const [isConnected, setIsConnected] = useState(false)
+  const { verifiedPlayer, isPlayerVerified, clearVerification } = useVerification()
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "Mint", href: "/mint" },
-          { name: "Player Payouts", href: "/payouts" },
+    { name: "Verify", href: "/verify" },
+    { name: "Player Payouts", href: "/payout" },
     { name: "Market", href: "/market" },
     { name: "Matches", href: "/matches" },
     { name: "Leaderboard", href: "/leaderboard" },
@@ -49,6 +53,19 @@ export function Navbar() {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {/* Verification Status */}
+            {isPlayerVerified() && verifiedPlayer && (
+              <div className="flex items-center space-x-2">
+                <Badge className="bg-lime-400/20 text-lime-400 border-lime-400/20">
+                  <Shield className="mr-1 h-3 w-3" />
+                  Verified
+                </Badge>
+                <div className="text-sm text-zinc-400">
+                  {verifiedPlayer.name}
+                </div>
+              </div>
+            )}
+            
             {!isConnected ? (
               <Button
                 onClick={() => setIsConnected(true)}
@@ -74,6 +91,18 @@ export function Navbar() {
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </DropdownMenuItem>
+                    {isPlayerVerified() && (
+                      <DropdownMenuItem 
+                        className="pixel-font text-red-400" 
+                        onClick={() => {
+                          clearVerification()
+                          setIsConnected(false)
+                        }}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Clear Verification
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="pixel-font" onClick={() => setIsConnected(false)}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Logout
