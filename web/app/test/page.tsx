@@ -10,6 +10,7 @@ import { SectionContainer } from "../components/SectionContainer";
 import { DeviceStatus } from "@ledgerhq/device-management-kit";
 import { ethers } from "ethers";
 import { MintPlayerWithLedger } from "../components/MintPlayerWithLedger";
+import HandleTransferWithLedger from "../components/HandleTransferWithLedger";
 
 function LedgerDemo() {
   const {
@@ -230,5 +231,6 @@ function LedgerDemo() {
 
 export default function Home() {
   // return <LedgerDemo />;
-  return <MintPlayerWithLedger />;
+  // return <MintPlayerWithLedger />;
+  return <HandleTransferWithLedger />;
 }
