@@ -97,17 +97,17 @@ async function startWatcher() {
           filteredEvents.push(event);
           console.log(`✅ Stored event with message value: ${messageValue}`);
         
-        // Process on Flare network regardless of filtering
-        try {
-          flarecoston2Client.writeContract({
-            address: CONTRACT_ADDRESS as Address,
-            abi: PLAYER_VERIFIED_ABI,
-            functionName: "processPlayerVerification",
-            args: [log.args.message, log.args.playerAddress, log.args.firstName, log.args.lastName, log.args.dateOfBirth],
-          });
-        } catch (error) {
-          console.error("Error processing on Flare network:", error);
-        }
+        // // Process on Flare network regardless of filtering
+        // try {
+        //   flarecoston2Client.writeContract({
+        //     address: CONTRACT_ADDRESS as Address,
+        //     abi: PLAYER_VERIFIED_ABI,
+        //     functionName: "processPlayerVerification",
+        //     args: [log.args.message, log.args.playerAddress, log.args.firstName, log.args.lastName, log.args.dateOfBirth],
+        //   });
+        // } catch (error) {
+        //   console.error("Error processing on Flare network:", error);
+        // }
       }
     },
     onError: (err: any) => {
