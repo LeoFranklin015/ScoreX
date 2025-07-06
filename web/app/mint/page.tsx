@@ -680,17 +680,6 @@ export default function Mint() {
     </div>
   );
 
-  if (!address || !keyringEth) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <LedgerConnectButton />
-        <p className="mt-4 text-zinc-300 text-lg">
-          Please connect your Ledger wallet to mint a bond.
-        </p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -854,10 +843,14 @@ export default function Mint() {
             <DialogTrigger asChild>
               <Button
                 className="w-full pixel-font bg-lime-400 text-zinc-950 hover:bg-lime-500 hover-pulse"
-                disabled={!selectedPlayer}
+                disabled={!selectedPlayer || !address || !keyringEth}
               >
                 <Target className="mr-2 h-4 w-4" />
-                {selectedPlayer ? "Mint Bond" : "Select Player First"}
+                {selectedPlayer
+                  ? !address || !keyringEth
+                    ? "Connect Wallet to Mint"
+                    : "Mint Bond"
+                  : "Select Player First"}
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-zinc-900 border-lime-400">
@@ -1101,6 +1094,15 @@ export default function Mint() {
 
                     {/* Mint Button */}
                     <div className="bg-zinc-900/60 backdrop-blur-sm rounded-xl p-6 border border-zinc-700">
+                      {!address ||
+                        (!keyringEth && (
+                          <div className="mb-4 flex flex-col items-center">
+                            <LedgerConnectButton />
+                            <span className="mt-2 text-red-400 text-sm">
+                              Please connect your Ledger wallet to mint.
+                            </span>
+                          </div>
+                        ))}
                       <StarBorder
                         as="button"
                         className="w-full"
@@ -1110,20 +1112,28 @@ export default function Mint() {
                         disabled={
                           mintLoading ||
                           hasUserMinted(selectedPlayerForProfile.id) ||
-                          getAvailableTokens(selectedPlayerForProfile.id) <= 0
+                          getAvailableTokens(selectedPlayerForProfile.id) <=
+                            0 ||
+                          !address ||
+                          !keyringEth
                         }
                         style={{
                           pointerEvents: "auto",
                           opacity:
                             mintLoading ||
                             hasUserMinted(selectedPlayerForProfile.id) ||
-                            getAvailableTokens(selectedPlayerForProfile.id) <= 0
+                            getAvailableTokens(selectedPlayerForProfile.id) <=
+                              0 ||
+                            !address ||
+                            !keyringEth
                               ? 0.5
                               : 1,
                         }}
                       >
                         {mintLoading
                           ? `Minting...`
+                          : !address || !keyringEth
+                          ? "Connect Wallet to Mint"
                           : hasUserMinted(selectedPlayerForProfile.id)
                           ? "Already Minted"
                           : getAvailableTokens(selectedPlayerForProfile.id) <= 0
@@ -1141,6 +1151,15 @@ export default function Mint() {
                                 if needed.
                               </div>
                             )}
+                            {stepStatus["broadcast"] === "error" &&
+                              mintError && (
+                                <div className="mt-4 text-xs text-red-400 break-all">
+                                  Broadcast Error:{" "}
+                                  {typeof mintError === "object"
+                                    ? JSON.stringify(mintError, null, 2)
+                                    : String(mintError)}
+                                </div>
+                              )}
                           </div>
                         </DialogContent>
                       </Dialog>

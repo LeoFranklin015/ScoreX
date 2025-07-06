@@ -5,6 +5,7 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
 } from "react";
 import {
   DeviceManagementKit,
@@ -90,6 +91,27 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [deviceSessionId, setSessionId] = useState<DeviceSessionId>();
   const [connectionError, setConnectionError] = useState<unknown>();
   const [address, setAddress] = useState<string | undefined>(undefined);
+
+  // Load address from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedAddress = localStorage.getItem("ledgerAddress");
+      if (storedAddress) {
+        setAddress(storedAddress);
+      }
+    }
+  }, []);
+
+  // Save address to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (address) {
+        localStorage.setItem("ledgerAddress", address);
+      } else {
+        localStorage.removeItem("ledgerAddress");
+      }
+    }
+  }, [address]);
 
   const connectDevice = useCallback(async () => {
     try {
