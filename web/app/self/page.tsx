@@ -42,7 +42,7 @@ export default function Home() {
         userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",
         endpointType: "staging_celo",
         userIdType: "hex", // use 'hex' for ethereum address or 'uuid' for uuidv4
-        userDefinedData: "276",
+        userDefinedData: "abc",
         disclosures: {
           // // what you want to verify from users' identity
           minimumAge: 18,
@@ -69,36 +69,6 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to initialize Self app:", error);
     }
-  }, []);
-
-  useEffect(() => {
-    if (!RPC_URL) return;
-    const client = createPublicClient({
-      chain: {
-        id: 44787,
-        name: "Celo Alfajores",
-        nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
-        rpcUrls: { default: { http: [RPC_URL] } },
-      },
-      transport: http(RPC_URL),
-    });
-
-    const unwatch = client.watchContractEvent({
-      address: CONTRACT_ADDRESS,
-      abi: PROOF_OF_PLAYER_CONTRACT_ABI,
-      eventName: "playerVerified",
-      pollingInterval: 5000,
-      onLogs: (logs) => {
-        if (logs.length > 0) {
-          setLatestEvent(logs[logs.length - 1]);
-        }
-      },
-      onError: (err) => {
-        console.error("Error watching event:", err);
-      },
-    });
-
-    return () => unwatch?.();
   }, []);
 
   const displayToast = (message: string) => {
