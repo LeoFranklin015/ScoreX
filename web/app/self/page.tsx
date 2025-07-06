@@ -8,9 +8,13 @@ import {
   SelfAppBuilder,
   type SelfApp,
 } from "@selfxyz/qrcode";
-import { v4 } from "uuid";
 import { ethers } from "ethers";
-import { LedgerConnectButton } from "./components/LedgerConnectButton";
+import { LedgerConnectButton } from "../components/LedgerConnectButton";
+import { createPublicClient, http, parseAbi } from "viem";
+import { PROOF_OF_PLAYER_CONTRACT_ABI } from "../lib/const";
+
+const CONTRACT_ADDRESS = "0xBe7c6B96092156F7C6DcD576E042af3E6cE817b5";
+const RPC_URL = process.env.NEXT_PUBLIC_CELO_ALFAJORES_RPC;
 
 export default function Home() {
   const router = useRouter();
@@ -20,6 +24,8 @@ export default function Home() {
   const [selfApp, setSelfApp] = useState<SelfApp | null>(null);
   const [universalLink, setUniversalLink] = useState("");
   const [userId, setUserId] = useState(ethers.ZeroAddress);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [latestEvent, setLatestEvent] = useState<any>(null);
 
   // Use useEffect to ensure code only executes on the client side
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function Home() {
         scope: process.env.NEXT_PUBLIC_SELF_SCOPE || "player-verification",
         endpoint: `${
           process.env.NEXT_PUBLIC_SELF_ENDPOINT ||
-          "0xF9E87DfBab897c4B73caF8CafECd94B1c11EFe5F"
+          "0xBe7c6B96092156F7C6DcD576E042af3E6cE817b5"
         }`,
         logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png", // url of a png image, base64 is accepted but not recommended
         userId: "0x4b4b30e2E7c6463b03CdFFD6c42329D357205334",
@@ -160,6 +166,23 @@ export default function Home() {
           </div>
         </div>
         <LedgerConnectButton />
+
+        {verificationSuccess && (
+          <div className="bg-green-100 text-green-800 p-2 rounded mb-4 text-center">
+            Verification successful! 🎉
+          </div>
+        )}
+
+        <div className="mt-4">
+          <h2 className="font-bold mb-2">Latest playerVerified Event</h2>
+          {latestEvent ? (
+            <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
+              {JSON.stringify(latestEvent, null, 2)}
+            </pre>
+          ) : (
+            <span className="text-gray-500">Waiting for event...</span>
+          )}
+        </div>
 
         {/* Toast notification */}
         {showToast && (

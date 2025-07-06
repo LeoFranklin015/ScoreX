@@ -49,6 +49,19 @@ import {
   PLAYER_LIST_CONTRACT_ABI,
   PLAYER_LIST_CONTRACT_ADDRESS,
 } from "../lib/const";
+import { useLedger } from "../components/Provider";
+import { LedgerConnectButton } from "../components/LedgerConnectButton";
+import { ethers } from "ethers";
+
+// Stepper step definitions
+const MINT_STEPS = [
+  { key: "fetchPrice", label: "Fetching price" },
+  { key: "fetchNonce", label: "Fetching nonce" },
+  { key: "buildTx", label: "Building transaction" },
+  { key: "sign", label: "Signing on Ledger" },
+  { key: "broadcast", label: "Broadcasting transaction" },
+  { key: "done", label: "Done" },
+];
 
 export default function Mint() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -83,9 +96,40 @@ export default function Mint() {
     MAX_MINTED_PLAYERS,
   } = useMintedPlayers();
 
+  const { address, keyringEth, signTransaction, broadcastTransaction } =
+    useLedger();
+
+  // Mint logic state
+  const [mintLoading, setMintLoading] = useState(false);
+  const [mintError, setMintError] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState<string>("");
+  const [stepStatus, setStepStatus] = useState<
+    Record<string, "pending" | "in_progress" | "done" | "error">
+  >({});
+  const [stepError, setStepError] = useState<Record<string, string>>({});
+  const [broadcastHash, setBroadcastHash] = useState<string | null>(null);
+  const [signTransactionOutput, setSignTransactionOutput] = useState<any>();
+  const [signTransactionError, setSignTransactionError] = useState<any>();
+  const [signTransactionState, setSignTransactionState] = useState<any>();
+  const [gasLimit, setGasLimit] = useState(150000);
+  const [gasPrice, setGasPrice] = useState("30000000000"); // 30 gwei
+
+  const [modalOpen, setModalOpen] = useState(false);
+
   useEffect(() => {
     fetchPlayersFromContract();
   }, []);
+
+  useEffect(() => {
+    if (mintLoading) {
+      setModalOpen(true);
+    } else if (stepStatus["done"] === "done") {
+      const timeout = setTimeout(() => setModalOpen(false), 10000);
+      return () => clearTimeout(timeout);
+    } else if (!mintLoading) {
+      setModalOpen(false);
+    }
+  }, [mintLoading, stepStatus["done"]]);
 
   const fetchPlayersFromContract = async () => {
     try {
@@ -103,7 +147,9 @@ export default function Mint() {
       console.log("📋 Player IDs from contract:", playerIds);
 
       // Convert BigInt array to number array
-      const playerIdNumbers = (playerIds as bigint[]).map((id: bigint) => Number(id));
+      const playerIdNumbers = (playerIds as bigint[]).map((id: bigint) =>
+        Number(id)
+      );
       console.log("📋 Converted player IDs:", playerIdNumbers);
 
       // Fetch player details for each ID
@@ -115,37 +161,46 @@ export default function Mint() {
             return null;
           }
           const playerStatsData = await response.json();
-          
+
           // Convert PlayerStats to Player format
-          if (playerStatsData && playerStatsData.player && playerStatsData.statistics && playerStatsData.statistics.length > 0) {
+          if (
+            playerStatsData &&
+            playerStatsData.player &&
+            playerStatsData.statistics &&
+            playerStatsData.statistics.length > 0
+          ) {
             // Use the first statistics entry (usually the most relevant one)
             const stats = playerStatsData.statistics[0];
-            
+
             const player: Player = {
               id: playerStatsData.player.id,
               name: playerStatsData.player.name,
-              team: stats.team?.name || 'Unknown',
-              position: stats.games?.position || 'Unknown',
+              team: stats.team?.name || "Unknown",
+              position: stats.games?.position || "Unknown",
               goals: stats.goals?.total || 0,
               assists: stats.goals?.assists || 0,
               value: 50000000, // Default value
               popularity: 75, // Default popularity
-              avatar: playerStatsData.player.photo || '/placeholder.svg?height=64&width=64',
-              photo: playerStatsData.player.photo || '/placeholder.svg?height=64&width=64',
-              nationality: playerStatsData.player.nationality || 'Unknown',
+              avatar:
+                playerStatsData.player.photo ||
+                "/placeholder.svg?height=64&width=64",
+              photo:
+                playerStatsData.player.photo ||
+                "/placeholder.svg?height=64&width=64",
+              nationality: playerStatsData.player.nationality || "Unknown",
               age: playerStatsData.player.age || 25,
               market_value: 50000000, // Default market value
               current_season_stats: {
                 goals: stats.goals?.total || 0,
                 assists: stats.goals?.assists || 0,
                 appearances: stats.games?.appearences || 0,
-                rating: parseFloat(stats.games?.rating) || 0
-              }
+                rating: parseFloat(stats.games?.rating) || 0,
+              },
             };
-            
+
             return player;
           }
-          
+
           return null;
         } catch (err) {
           console.warn(`Error fetching player ${playerId}:`, err);
@@ -154,37 +209,42 @@ export default function Mint() {
       });
 
       const playerResults = await Promise.all(playerPromises);
-      const validPlayers = playerResults.filter((player: Player | null): player is Player => player !== null);
-      
+      const validPlayers = playerResults.filter(
+        (player: Player | null): player is Player => player !== null
+      );
+
       console.log("📋 Fetched players:", validPlayers);
       setPlayers(validPlayers);
 
       // Fetch token sales from contract for each player
       const tokenSalesPromises = validPlayers.map(async (player: Player) => {
         try {
-          const tokensSold = await publicClient.readContract({
+          const tokensSold = (await publicClient.readContract({
             abi: CURVE_LEAGUE_CONTRACT_ABI,
             address: CURVE_LEAGUE_CONTRACT_ADDRESS,
             functionName: "tokensSold",
             args: [BigInt(player.id)],
-          }) as bigint;
-          
+          })) as bigint;
+
           return {
             playerId: player.id,
-            tokensSold: Number(tokensSold)
+            tokensSold: Number(tokensSold),
           };
         } catch (err) {
-          console.warn(`Error fetching token sales for player ${player.id}:`, err);
+          console.warn(
+            `Error fetching token sales for player ${player.id}:`,
+            err
+          );
           return {
             playerId: player.id,
-            tokensSold: 0
+            tokensSold: 0,
           };
         }
       });
 
       const tokenSalesResults = await Promise.all(tokenSalesPromises);
       const newTokenCounts: Record<number, number> = {};
-      
+
       tokenSalesResults.forEach(({ playerId, tokensSold }) => {
         // Calculate available tokens (100 - tokens sold)
         const availableTokens = Math.max(0, 100 - tokensSold);
@@ -198,7 +258,11 @@ export default function Mint() {
         setPlayerTokenCounts((prev) => ({ ...prev, ...newTokenCounts }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load players from contract");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load players from contract"
+      );
       console.error("Error fetching players from contract:", err);
     } finally {
       setLoadingPlayers(false);
@@ -360,7 +424,8 @@ export default function Mint() {
                     </div>
                     <div className="text-center">
                       <div className="text-purple-400 font-bold">
-                        {player.current_season_stats?.rating?.toFixed(1) || '0.0'}
+                        {player.current_season_stats?.rating?.toFixed(1) ||
+                          "0.0"}
                       </div>
                       <div className="text-zinc-400">Rating</div>
                     </div>
@@ -443,6 +508,189 @@ export default function Mint() {
     </Card>
   );
 
+  // Fetch price for a player
+  const fetchPrice = async (playerId: number) => {
+    try {
+      const result = await publicClient.readContract({
+        address: CURVE_LEAGUE_CONTRACT_ADDRESS,
+        abi: CURVE_LEAGUE_CONTRACT_ABI,
+        functionName: "getPrice",
+        args: [playerId],
+      });
+      return (result as bigint).toString();
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  // Helper to update step status
+  const updateStep = (
+    step: string,
+    status: "pending" | "in_progress" | "done" | "error",
+    errorMsg?: string
+  ) => {
+    setStepStatus((prev) => ({ ...prev, [step]: status }));
+    if (errorMsg) setStepError((prev) => ({ ...prev, [step]: errorMsg }));
+  };
+
+  const handleMint = async () => {
+    if (!selectedPlayerForProfile) return;
+    setMintLoading(true);
+    setMintError(null);
+    setBroadcastHash(null);
+    setSignTransactionOutput(undefined);
+    setSignTransactionError(undefined);
+    setSignTransactionState(undefined);
+    setCurrentStep("fetchPrice");
+    setStepStatus({});
+    setStepError({});
+    try {
+      // 1. Fetch price
+      updateStep("fetchPrice", "in_progress");
+      const freshPrice = await fetchPrice(selectedPlayerForProfile.id);
+      if (!freshPrice) throw new Error("Failed to fetch price");
+      updateStep("fetchPrice", "done");
+      setCurrentStep("fetchNonce");
+      // 2. Fetch nonce
+      updateStep("fetchNonce", "in_progress");
+      if (!address) throw new Error("No address");
+      const provider = new ethers.JsonRpcProvider(
+        "https://coston2-api.flare.network/ext/C/rpc"
+      );
+      const n = await provider.getTransactionCount(address);
+      updateStep("fetchNonce", "done");
+      setCurrentStep("buildTx");
+      // 3. Build unsigned tx
+      updateStep("buildTx", "in_progress");
+      const iface = new ethers.Interface(CURVE_LEAGUE_CONTRACT_ABI);
+      const data = iface.encodeFunctionData("mintPlayer", [
+        BigInt(selectedPlayerForProfile.id),
+      ]);
+      const tx = {
+        to: CURVE_LEAGUE_CONTRACT_ADDRESS,
+        value: freshPrice,
+        nonce: n,
+        gasLimit,
+        gasPrice,
+        data,
+        chainId: 114,
+      };
+      const unsignedHex = ethers.Transaction.from(tx).unsignedSerialized;
+      updateStep("buildTx", "done");
+      setCurrentStep("sign");
+      // 4. Sign transaction
+      updateStep("sign", "in_progress");
+      await new Promise<void>((resolve, reject) => {
+        signTransaction(
+          "44'/60'/0'/0",
+          unsignedHex,
+          setSignTransactionState,
+          (output: any) => {
+            setSignTransactionOutput(output);
+            updateStep("sign", "done");
+            setCurrentStep("broadcast");
+            // 5. Broadcast immediately after signature
+            updateStep("broadcast", "in_progress");
+            try {
+              const { v, r, s } = output || {};
+              if (!v || !r || !s) throw new Error("No signature from Ledger");
+              const signedTxHex = ethers.Transaction.from({
+                ...tx,
+                signature: { v, r, s },
+              }).serialized;
+              broadcastTransaction(signedTxHex)
+                .then((hash) => {
+                  setBroadcastHash(hash);
+                  updateStep("broadcast", "done");
+                  setCurrentStep("done");
+                  updateStep("done", "done");
+                  resolve();
+                })
+                .catch((err) => {
+                  updateStep("broadcast", "error", err.message || String(err));
+                  setMintError(err);
+                  setCurrentStep("broadcast");
+                  reject(err);
+                });
+            } catch (err: any) {
+              updateStep("broadcast", "error", err.message || String(err));
+              setMintError(err);
+              setCurrentStep("broadcast");
+              reject(err);
+            }
+          },
+          (err: any) => {
+            setSignTransactionError(err);
+            updateStep("sign", "error", err.message || String(err));
+            setMintError(err);
+            setCurrentStep("sign");
+            reject(err);
+          }
+        );
+      });
+    } catch (err: any) {
+      updateStep(currentStep, "error", err.message || String(err));
+      setMintError(err);
+    } finally {
+      setMintLoading(false);
+    }
+  };
+
+  // Stepper UI component
+  const MintStepper = () => (
+    <div className="my-4">
+      <ol className="space-y-2">
+        {MINT_STEPS.map((step, idx) => {
+          const status = stepStatus[step.key] || "pending";
+          return (
+            <li key={step.key} className="flex items-center gap-2">
+              <span
+                className={
+                  status === "done"
+                    ? "text-green-400"
+                    : status === "in_progress"
+                    ? "text-blue-400 animate-pulse"
+                    : status === "error"
+                    ? "text-red-400"
+                    : "text-zinc-400"
+                }
+              >
+                {status === "done" && "✔"}
+                {status === "in_progress" && "●"}
+                {status === "error" && "✖"}
+                {status === "pending" && idx + 1}
+              </span>
+              <span className="font-mono text-sm">
+                {step.label}
+                {status === "error" && stepError[step.key] && (
+                  <span className="ml-2 text-xs text-red-400">
+                    {stepError[step.key]}
+                  </span>
+                )}
+                {step.key === "done" && broadcastHash && (
+                  <span className="ml-2 text-xs text-green-400">
+                    Tx Hash: {broadcastHash}
+                  </span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+
+  if (!address || !keyringEth) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <LedgerConnectButton />
+        <p className="mt-4 text-zinc-300 text-lg">
+          Please connect your Ledger wallet to mint a bond.
+        </p>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -484,9 +732,7 @@ export default function Mint() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Selection Area */}
-        <div className="lg:col-span-2">
-          {renderPlayerSelection()}
-        </div>
+        <div className="lg:col-span-2">{renderPlayerSelection()}</div>
 
         {/* Bond Configuration */}
         <div className="space-y-6">
@@ -556,7 +802,9 @@ export default function Mint() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-400">Position:</span>
-                    <span className="text-white">{selectedPlayer.position}</span>
+                    <span className="text-white">
+                      {selectedPlayer.position}
+                    </span>
                   </div>
                 </>
               )}
@@ -664,7 +912,9 @@ export default function Mint() {
                     </div>
                     <div className="text-center">
                       <div className="text-purple-400 font-bold">
-                        {selectedPlayer?.current_season_stats?.rating?.toFixed(1) || '0.0'}
+                        {selectedPlayer?.current_season_stats?.rating?.toFixed(
+                          1
+                        ) || "0.0"}
                       </div>
                       <div className="text-xs text-zinc-400">Rating</div>
                     </div>
@@ -728,9 +978,11 @@ export default function Mint() {
                     .replace(/\s+/g, "")}
                   status={`${selectedPlayerForProfile.goals}G • ${
                     selectedPlayerForProfile.assists
-                  }A • ${selectedPlayerForProfile.current_season_stats?.rating?.toFixed(
-                    1
-                  ) || '0.0'}⭐`}
+                  }A • ${
+                    selectedPlayerForProfile.current_season_stats?.rating?.toFixed(
+                      1
+                    ) || "0.0"
+                  }⭐`}
                   contactText={
                     hasUserMinted(selectedPlayerForProfile.id)
                       ? "Already Minted"
@@ -788,8 +1040,15 @@ export default function Mint() {
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-zinc-400">
-                          <span>Sold: {100 - getAvailableTokens(selectedPlayerForProfile.id)}</span>
-                          <span>Available: {getAvailableTokens(selectedPlayerForProfile.id)}</span>
+                          <span>
+                            Sold:{" "}
+                            {100 -
+                              getAvailableTokens(selectedPlayerForProfile.id)}
+                          </span>
+                          <span>
+                            Available:{" "}
+                            {getAvailableTokens(selectedPlayerForProfile.id)}
+                          </span>
                         </div>
                         <div className="w-full bg-zinc-700 rounded-full h-3">
                           <div
@@ -831,7 +1090,9 @@ export default function Mint() {
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-purple-400">
-                            {selectedPlayerForProfile.current_season_stats?.rating?.toFixed(1) || '0.0'}
+                            {selectedPlayerForProfile.current_season_stats?.rating?.toFixed(
+                              1
+                            ) || "0.0"}
                           </div>
                           <div className="text-sm text-zinc-400">Rating</div>
                         </div>
@@ -845,34 +1106,44 @@ export default function Mint() {
                         className="w-full"
                         color="#00ffaa"
                         speed="3s"
-                        onClick={() =>
-                          handleMintToken(selectedPlayerForProfile)
-                        }
+                        onClick={handleMint}
                         disabled={
+                          mintLoading ||
                           hasUserMinted(selectedPlayerForProfile.id) ||
                           getAvailableTokens(selectedPlayerForProfile.id) <= 0
                         }
                         style={{
                           pointerEvents: "auto",
                           opacity:
+                            mintLoading ||
                             hasUserMinted(selectedPlayerForProfile.id) ||
                             getAvailableTokens(selectedPlayerForProfile.id) <= 0
                               ? 0.5
                               : 1,
                         }}
                       >
-                        {hasUserMinted(selectedPlayerForProfile.id)
+                        {mintLoading
+                          ? `Minting...`
+                          : hasUserMinted(selectedPlayerForProfile.id)
                           ? "Already Minted"
                           : getAvailableTokens(selectedPlayerForProfile.id) <= 0
                           ? "Sold Out"
                           : "Mint Token"}
                       </StarBorder>
-                      {!hasUserMinted(selectedPlayerForProfile.id) &&
-                        getAvailableTokens(selectedPlayerForProfile.id) > 0 && (
-                          <p className="text-zinc-400 text-sm text-center mt-3">
-                            You can only mint one token per player
-                          </p>
-                        )}
+                      <Dialog open={modalOpen}>
+                        <DialogContent>
+                          <div className="flex flex-col items-center justify-center min-h-[200px]">
+                            <div className="mb-4 animate-spin rounded-full border-4 border-lime-400 border-t-transparent h-12 w-12" />
+                            <MintStepper />
+                            {stepStatus["done"] === "done" && broadcastHash && (
+                              <div className="mt-4 text-xs text-zinc-400">
+                                This will close in 10 seconds. Copy your Tx Hash
+                                if needed.
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 )}
