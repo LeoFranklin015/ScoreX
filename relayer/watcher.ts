@@ -17,7 +17,7 @@ const CELO_ALFAJORES_RPC = process.env.CELO_ALFAJORES_RPC as string;
 
 const CONTRACT_ADDRESS = "0xF9E87DfBab897c4B73caF8CafECd94B1c11EFe5F";
 const PLAYER_VERIFIED_ABI = parseAbi([
-  "event playerVerified(string message, address playerAddress, string firstName, string lastName, string nationality, string dateOfBirth, string gender)",
+  "event playerVerified(string message, address playerAddress, string firstName, string lastName, string nationality, string dateOfBirth, string gender, uint256 nullifier)",
 ]);
 
 interface FilteredEvent {
@@ -28,6 +28,7 @@ interface FilteredEvent {
   nationality: string;
   dateOfBirth: string;
   gender: string;
+  nullifier: any;
   timestamp: number;
 }
 
@@ -36,7 +37,9 @@ let filteredEvents: FilteredEvent[] = [];
 // Cleanup function to remove events older than 1 minute
 function cleanupOldEvents() {
   const oneMinuteAgo = Date.now() - 60000; // 60 seconds
-  filteredEvents = filteredEvents.filter(event => event.timestamp > oneMinuteAgo);
+  filteredEvents = filteredEvents.filter(
+    (event) => event.timestamp > oneMinuteAgo
+  );
 }
 
 // Run cleanup every 30 seconds
@@ -57,8 +60,10 @@ async function startWatcher() {
   });
 
   const privateKey = process.env.PRIVATE_KEY as string;
-  const formattedPrivateKey = (privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`) as `0x${string}`;
-  
+  const formattedPrivateKey = (
+    privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`
+  ) as `0x${string}`;
+
   const flarecoston2Client = createWalletClient({
     account: privateKeyToAccount(formattedPrivateKey),
     chain: flareTestnet,
@@ -78,11 +83,29 @@ async function startWatcher() {
     onLogs: (logs: any) => {
       for (const log of logs) {
         console.log("playerVerified event:", log.args);
-        
+
         // Parse message as integer
         const messageValue = parseInt(log.args.message);
-        
+
         // Only store if message value is greater than 0
+        if (messageValue) {
+          try {
+            flarecoston2Client.writeContract({
+              address: CONTRACT_ADDRESS as Address,
+              abi: PLAYER_VERIFIED_ABI,
+              functionName: "processPlayerVerification",
+              args: [
+                log.args.message,
+                log.args.playerAddress,
+                log.args.firstName,
+                log.args.lastName,
+                log.args.dateOfBirth,
+              ],
+            });
+          } catch (error) {
+            console.error("Error processing on Flare network:", error);
+          }
+        } else {
           const event: FilteredEvent = {
             message: log.args.message,
             playerAddress: log.args.playerAddress,
@@ -91,12 +114,14 @@ async function startWatcher() {
             nationality: log.args.nationality,
             dateOfBirth: log.args.dateOfBirth,
             gender: log.args.gender,
-            timestamp: Date.now()
+            nullifier: log.args.nullifier,
+            timestamp: Date.now(),
           };
-          
+
           filteredEvents.push(event);
           console.log(`✅ Stored event with message value: ${messageValue}`);
-        
+        }
+
         // // Process on Flare network regardless of filtering
         // try {
         //   flarecoston2Client.writeContract({
@@ -125,39 +150,39 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-app.get('/events/player/:playerAddress', (req, res) => {
+app.get("/events/player/:playerAddress", (req, res) => {
   cleanupOldEvents();
-  
+
   const { playerAddress } = req.params;
-  
+
   if (!playerAddress) {
-    return res.status(400).json({ 
-      error: 'Player address is required',
-      message: 'Please provide a valid player address'
+    return res.status(400).json({
+      error: "Player address is required",
+      message: "Please provide a valid player address",
     });
   }
-  
+
   // Find event with matching player address
-  const event = filteredEvents.find(event => 
-    event.playerAddress.toLowerCase() === playerAddress.toLowerCase()
+  const event = filteredEvents.find(
+    (event) => event.playerAddress.toLowerCase() === playerAddress.toLowerCase()
   );
-  
+
   if (!event) {
-    return res.status(404).json({ 
-      error: 'Player not found',
+    return res.status(404).json({
+      error: "Player not found",
       message: `No event found for player address: ${playerAddress}`,
-      playerAddress: playerAddress
+      playerAddress: playerAddress,
     });
   }
-  
+
   res.json({
     found: true,
     event: event,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -166,7 +191,7 @@ async function main() {
   try {
     // Start the watcher
     await startWatcher();
-    
+
     // Start the Express server
     app.listen(PORT, () => {
       console.log(`🚀 Express server running on port ${PORT}`);
