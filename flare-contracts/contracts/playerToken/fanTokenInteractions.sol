@@ -24,6 +24,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     mapping(address => uint256) public totalUserTokens;
     mapping(uint256 => bool) public playerClaimed;
     mapping(address => mapping(uint256 => bool)) public userClaimed;
+    mapping(address => uint256) public userNullifiers;
 
     uint256 public currentSeason;
     bool public seasonActive;
@@ -38,6 +39,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     event LiquidityWithdrawn(uint256 indexed tokenId, uint256 amount);
     event PriceCalculated(uint256 indexed tokenId, uint256 price, uint256 sold, uint256 multiplier);
     event PlayerStatsListAddressUpdated(address newAddress);
+    event NullifierStored(address indexed user, uint256 nullifier);
     event PlayerVerificationProcessed(
         
         uint256 indexed playerId, 
@@ -47,6 +49,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         string dateOfBirth,
         uint256 amountSent
     );
+    event UserTokensListed(address indexed user, uint256[] tokenIds, uint256[] amounts);
 
     // Errors
     error PlayerAlreadyMinted();
@@ -66,6 +69,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
     error ZeroAddress();
     error InvalidPlayerStatsListAddress();
     error PlayerVerificationFailed();
+    error NoTokensFound();
 
     constructor(address _fanBondToken)  Ownable(msg.sender){
         if (_fanBondToken == address(0)) revert ZeroAddress();
@@ -142,7 +146,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         }
     }
 
-    function mintPlayer(uint256 tokenId) external payable nonReentrant {
+    function mintPlayer(uint256 tokenId, uint256 nullifier) external payable nonReentrant {
         if (!seasonActive) revert SeasonNotActive();
         if (!fanBondToken.playerTokenExists(tokenId)) revert PlayerNotExists();
         if (hasMintedPlayer[msg.sender][tokenId]) revert PlayerAlreadyMinted();
@@ -156,6 +160,9 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         hasMintedPlayer[msg.sender][tokenId] = true;
         totalUserTokens[msg.sender]++;
         liquidity[tokenId] += price;
+        
+        // Store the nullifier for the user
+        userNullifiers[msg.sender] = nullifier;
 
         fanBondToken.mintTokens(msg.sender, tokenId, 1);
 
@@ -165,6 +172,7 @@ contract FanBondGame is Ownable, ReentrancyGuard {
 
         emit PlayerMinted(msg.sender, tokenId, price, currentSeason);
         emit PriceCalculated(tokenId, price, tokensSold[tokenId], getPerformanceMultiplier(tokenId));
+        emit NullifierStored(msg.sender, nullifier);
     }
 
     function playerClaim(uint256 tokenId) external nonReentrant {
@@ -218,6 +226,47 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         }
 
         emit UserClaimed(msg.sender, tokenId, userShare, userTokens);
+    }
+
+    /**
+     * @notice Lists all tokens and their counts owned by a specific user
+     * @param user The address of the user to check
+     * @return tokenIds Array of token IDs that the user owns
+     * @return amounts Array of amounts for each token ID
+     */
+    function getAllUserTokens(address user) external view returns (
+        uint256[] memory tokenIds, 
+        uint256[] memory amounts
+    ) {
+        if (totalUserTokens[user] == 0) revert NoTokensFound();
+        
+        uint256[] memory allPlayerIds = fanBondToken.getAllPlayerIds();
+        uint256[] memory tempTokenIds = new uint256[](allPlayerIds.length);
+        uint256[] memory tempAmounts = new uint256[](allPlayerIds.length);
+        uint256 count = 0;
+        
+        // Collect all tokens the user owns
+        for (uint256 i = 0; i < allPlayerIds.length; i++) {
+            uint256 tokenId = allPlayerIds[i];
+            uint256 balance = fanBondToken.balanceOf(user, tokenId);
+            
+            if (balance > 0) {
+                tempTokenIds[count] = tokenId;
+                tempAmounts[count] = balance;
+                count++;
+            }
+        }
+        
+        if (count == 0) revert NoTokensFound();
+        
+        // Create properly sized arrays
+        tokenIds = new uint256[](count);
+        amounts = new uint256[](count);
+        
+        for (uint256 i = 0; i < count; i++) {
+            tokenIds[i] = tempTokenIds[i];
+            amounts[i] = tempAmounts[i];
+        }
     }
 
     function _burnTokensProportionally(uint256 tokenId, uint256 totalToBurn) internal {
@@ -424,6 +473,15 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         if (statsBytes[2] != verificationBytes[6] || statsBytes[3] != verificationBytes[7]) return false;
         
         return true;
+    }
+
+    /**
+     * @notice Retrieves the nullifier for a specific user
+     * @param user The address of the user
+     * @return nullifier The nullifier value stored for the user
+     */
+    function getUserNullifier(address user) external view returns (uint256 nullifier) {
+        return userNullifiers[user];
     }
 
     receive() external payable {}

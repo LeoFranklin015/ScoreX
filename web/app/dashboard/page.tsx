@@ -2,28 +2,88 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { TrendingUp, Users, DollarSign, Zap, ArrowUpRight } from "lucide-react"
+import { TrendingUp, Users, DollarSign, Zap, ArrowUpRight, Activity } from "lucide-react"
 import FootballField from "../components/FootballField"
 import PlayerDashboard from "../components/PlayerDashboard"
 import { Player as APIPlayer } from "../lib/football-api"
 import { useMintedPlayers } from "../lib/minted-players-context"
+import { publicClient } from "../lib/client"
+import { CURVE_LEAGUE_CONTRACT_ADDRESS, CURVE_LEAGUE_CONTRACT_ABI, PLAYER_LIST_CONTRACT_ADDRESS, PLAYER_LIST_CONTRACT_ABI } from "../lib/const"
+import { formatEther } from "viem"
 
 export default function Dashboard() {
-  const [portfolioROI, setPortfolioROI] = useState(15.4)
   const [isAnimating, setIsAnimating] = useState(false)
   const [selectedPlayerStats, setSelectedPlayerStats] = useState<any>(null)
   const [selectedPlayer, setSelectedPlayer] = useState<APIPlayer | null>(null)
   const [showPlayerDashboard, setShowPlayerDashboard] = useState(false)
   
+  // Contract data states
+  const [totalLiquidity, setTotalLiquidity] = useState<string>("0")
+  const [activePlayers, setActivePlayers] = useState<number>(0)
+  const [seasonActive, setSeasonActive] = useState<boolean>(false)
+  const [curveCoefficient, setCurveCoefficient] = useState<string>("0")
+  const [loading, setLoading] = useState(true)
+  
   // Use minted players context
   const { isMinted } = useMintedPlayers()
 
+  // Fetch contract data
+  const fetchContractData = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch total liquidity
+      const liquidity = await publicClient.readContract({
+        abi: CURVE_LEAGUE_CONTRACT_ABI,
+        address: CURVE_LEAGUE_CONTRACT_ADDRESS,
+        functionName: "getTotalLiquidity",
+        args: [],
+      }) as bigint
+      
+      setTotalLiquidity(formatEther(liquidity))
+      
+      // Fetch active players count
+      const playerIds = await publicClient.readContract({
+        abi: PLAYER_LIST_CONTRACT_ABI,
+        address: PLAYER_LIST_CONTRACT_ADDRESS,
+        functionName: "getAllPlayerIds",
+        args: [],
+      }) as bigint[]
+      
+      setActivePlayers(playerIds.length)
+      
+      // Fetch season active status
+      const isSeasonActive = await publicClient.readContract({
+        abi: CURVE_LEAGUE_CONTRACT_ABI,
+        address: CURVE_LEAGUE_CONTRACT_ADDRESS,
+        functionName: "seasonActive",
+        args: [],
+      }) as boolean
+      
+      setSeasonActive(isSeasonActive)
+      
+      // Fetch curve coefficient
+      const coefficient = await publicClient.readContract({
+        abi: CURVE_LEAGUE_CONTRACT_ABI,
+        address: CURVE_LEAGUE_CONTRACT_ADDRESS,
+        functionName: "CURVE_COEFFICIENT",
+        args: [],
+      }) as bigint
+      
+      setCurveCoefficient(formatEther(coefficient))
+      
+    } catch (error) {
+      console.error("Error fetching contract data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true)
-      setPortfolioROI((prev) => prev + (Math.random() - 0.5) * 2)
-      setTimeout(() => setIsAnimating(false), 500)
-    }, 5000)
+    fetchContractData()
+    
+    // Refresh data every 30 seconds
+    const interval = setInterval(fetchContractData, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -93,7 +153,15 @@ export default function Dashboard() {
   }
 
   // Dynamic stats based on selected player or portfolio overview
-  const stats = selectedPlayerStats ? [
+  const stats: Array<{
+    title: string;
+    value: string;
+    change: string;
+    icon: any;
+    color: string;
+    player?: string;
+    animated?: boolean;
+  }> = selectedPlayerStats ? [
     {
       title: "Current Bond Value",
       value: `$${selectedPlayerStats.currentPrice}`,
@@ -130,36 +198,33 @@ export default function Dashboard() {
   ] : [
     {
       title: "Total Bonded Value",
-      value: "$12,450",
+      value: loading ? "Loading..." : `${parseFloat(totalLiquidity).toFixed(2)} ETH`,
       change: "+8.2%",
       icon: DollarSign,
       color: "text-lime-400",
     },
     {
       title: "Active Players",
-      value: "23",
+      value: loading ? "Loading..." : activePlayers.toString(),
       change: "+3",
       icon: Users,
       color: "text-fuchsia-500",
     },
     {
-      title: "Portfolio ROI",
-      value: `${portfolioROI.toFixed(1)}%`,
-      change: "+2.1%",
-      icon: TrendingUp,
-      color: "text-lime-400",
-      animated: isAnimating,
+      title: "Season Status",
+      value: loading ? "Loading..." : (seasonActive ? "ACTIVE" : "INACTIVE"),
+      change: seasonActive ? "Live" : "Ended",
+      icon: Activity,
+      color: seasonActive ? "text-green-400" : "text-red-400",
     },
     {
-      title: "Bond Power",
-      value: "1,247",
-      change: "+12",
+      title: "Curve Coefficient",
+      value: loading ? "Loading..." : `${parseFloat(curveCoefficient).toFixed(6)} ETH`,
+      change: "Fixed",
       icon: Zap,
       color: "text-purple-400",
     },
   ]
-
-
 
   // Show PlayerDashboard if a player is selected and showPlayerDashboard is true
   if (showPlayerDashboard && selectedPlayer) {
@@ -207,9 +272,9 @@ export default function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-zinc-300">
                 {stat.title}
-                {(stat as any).player && (
+                {stat.player && (
                   <div className="text-xs text-lime-400 font-normal mt-1">
-                    {(stat as any).player}
+                    {stat.player}
                   </div>
                 )}
               </CardTitle>

@@ -114,7 +114,7 @@ async function startWatcher() {
             nationality: log.args.nationality,
             dateOfBirth: log.args.dateOfBirth,
             gender: log.args.gender,
-            nullifier: log.args.nullifier,
+            nullifier: log.args.nullifier ? log.args.nullifier.toString() : '',
             timestamp: Date.now(),
           };
 
