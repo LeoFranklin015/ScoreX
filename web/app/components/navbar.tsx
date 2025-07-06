@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { Badge } from "../components/ui/badge";
-import { Wallet, User, LogOut, Shield } from "lucide-react";
+import { Wallet, User, LogOut, Shield, Users } from "lucide-react";
 import { useVerification } from "../lib/verification-context";
 import { LedgerConnectButton } from "../components/LedgerConnectButton";
 
@@ -24,6 +24,7 @@ export function Navbar() {
   const navItems = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "Mint", href: "/mint" },
+    { name: "My Team", href: "/my-team" },
     { name: "Verify", href: "/verify" },
     { name: "Player Payouts", href: "/payout" },
     { name: "Market", href: "/market" },

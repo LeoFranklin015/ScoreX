@@ -5,7 +5,9 @@ import { Button } from "../components/ui/button"
 import Image from "next/image"
 import { useMintedPlayers } from "../lib/minted-players-context"
 import { Player as APIPlayer } from "../lib/football-api"
+import { Users } from "lucide-react"
 import "./football-field.css"
+import Link from "next/link"
 
 
 
@@ -483,9 +485,16 @@ export default function FootballField({
               {currentPlayers.length === 0 ? (
                 <div className="ff-empty-field">
                   <div className="ff-empty-message">
+                  <Link href="/mint">
+                      <Button className="bg-lime-600 hover:bg-lime-700 text-white mt-1">
+                        <Users className="w-4 h-4 mr-2" />
+                        Mint Players
+                      </Button>
+                    </Link>
                     <h3>No Players Minted</h3>
                     <p>Go to the Mint page to start building your team!</p>
                     <p className="text-sm text-zinc-400 mt-2">You can mint up to 11 players per season</p>
+
                   </div>
                 </div>
               ) : (

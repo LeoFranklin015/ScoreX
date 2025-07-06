@@ -27,18 +27,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <LedgerProvider>
-        <MintedPlayersProvider>
-          <VerificationProvider>
-            <Navbar />
-            <body
-              className={`${inter.className} ${orbitron.variable} bg-zinc-950 text-zinc-100 min-h-screen mt-16`}
-            >
-              {children}
-            </body>
-          </VerificationProvider>
-        </MintedPlayersProvider>
-      </LedgerProvider>
+      <body
+        className={`${inter.className} ${orbitron.variable} bg-zinc-950 text-zinc-100 min-h-screen`}
+      >
+        <LedgerProvider>
+          <MintedPlayersProvider>
+            <VerificationProvider>
+              <Navbar />
+              <main className="mt-16">
+                {children}
+              </main>
+            </VerificationProvider>
+          </MintedPlayersProvider>
+        </LedgerProvider>
+      </body>
     </html>
   );
 }

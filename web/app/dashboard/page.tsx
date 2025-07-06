@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { TrendingUp, Users, DollarSign, Zap, ArrowUpRight, Activity } from "lucide-react"
+import { Button } from "../components/ui/button"
+import { TrendingUp, Users, DollarSign, Zap, ArrowUpRight, Activity, Target } from "lucide-react"
 import FootballField from "../components/FootballField"
 import PlayerDashboard from "../components/PlayerDashboard"
 import { Player as APIPlayer } from "../lib/football-api"
@@ -10,6 +11,7 @@ import { useMintedPlayers } from "../lib/minted-players-context"
 import { publicClient } from "../lib/client"
 import { CURVE_LEAGUE_CONTRACT_ADDRESS, CURVE_LEAGUE_CONTRACT_ABI, PLAYER_LIST_CONTRACT_ADDRESS, PLAYER_LIST_CONTRACT_ABI } from "../lib/const"
 import { formatEther } from "viem"
+import Link from "next/link"
 
 export default function Dashboard() {
   const [isAnimating, setIsAnimating] = useState(false)
@@ -245,21 +247,32 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="pixel-font text-4xl font-bold text-lime-400 mb-2">Dashboard</h1>
-        <p className="text-zinc-400">
-          {selectedPlayerStats 
-            ? `Viewing ${selectedPlayerStats.playerName}'s bond performance` 
-            : "Welcome back, degen. Your empire awaits."
-          }
-        </p>
-        {selectedPlayerStats && (
-          <button 
-            onClick={() => handlePlayerSelect(null)}
-            className="text-xs text-zinc-500 hover:text-lime-400 mt-1 underline"
-          >
-            ← Back to portfolio overview
-          </button>
-        )}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="pixel-font text-4xl font-bold text-lime-400 mb-2">Dashboard</h1>
+            <p className="text-zinc-400">
+              {selectedPlayerStats 
+                ? `Viewing ${selectedPlayerStats.playerName}'s bond performance` 
+                : "Welcome back, degen. Your empire awaits."
+              }
+            </p>
+            {selectedPlayerStats && (
+              <button 
+                onClick={() => handlePlayerSelect(null)}
+                className="text-xs text-zinc-500 hover:text-lime-400 mt-1 underline"
+              >
+                ← Back to portfolio overview
+              </button>
+            )}
+          </div>
+          
+          <Link href="/my-team">
+            <Button className="bg-lime-600 hover:bg-lime-700 text-white">
+              <Target className="w-4 h-4 mr-2" />
+              View Full Team
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
