@@ -15,7 +15,7 @@ dotenv.config();
 
 const CELO_ALFAJORES_RPC = process.env.CELO_ALFAJORES_RPC as string;
 
-const CONTRACT_ADDRESS = "0xF9E87DfBab897c4B73caF8CafECd94B1c11EFe5F";
+const CONTRACT_ADDRESS = "0xBe7c6B96092156F7C6DcD576E042af3E6cE817b5";
 const PLAYER_VERIFIED_ABI = parseAbi([
   "event playerVerified(string message, address playerAddress, string firstName, string lastName, string nationality, string dateOfBirth, string gender, uint256 nullifier)",
 ]);
