@@ -34,7 +34,8 @@ contract ProofOfPlayer is SelfVerificationRoot {
         string lastName,
         string nationality,
         string dateOfBirth,
-        string gender
+        string gender,
+        uint256 nullifier
     );
 
     /**
@@ -66,7 +67,7 @@ contract ProofOfPlayer is SelfVerificationRoot {
         
 
 
-        emit playerVerified(message, lastUserAddress, output.name[0], output.name[1], output.nationality, output.dateOfBirth, output.gender);
+        emit playerVerified(message, lastUserAddress, output.name[0], output.name[1], output.nationality, output.dateOfBirth, output.gender , output.nullifier);
 
     }
 
