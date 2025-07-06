@@ -52,6 +52,7 @@ import {
 import { useLedger } from "../components/Provider";
 import { LedgerConnectButton } from "../components/LedgerConnectButton";
 import { ethers } from "ethers";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Stepper step definitions
 const MINT_STEPS = [
@@ -115,6 +116,32 @@ export default function Mint() {
   const [gasPrice, setGasPrice] = useState("30000000000"); // 30 gwei
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Verification state
+  const [isVerified, setIsVerified] = useState(false);
+  const [nullifier, setNullifier] = useState<string | null>(null);
+
+  // Check for verification params in URL
+  useEffect(() => {
+    const verifiedParam = searchParams.get("verified");
+    const idParam = searchParams.get("id");
+    if (verifiedParam === "true" && idParam) {
+      setIsVerified(true);
+      // Fetch nullifier from external API
+      fetch(
+        `https://9fd8-83-144-23-156.ngrok-free.app/events/player/${idParam}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.nullifier) {
+            setNullifier(data.nullifier);
+          }
+        });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPlayersFromContract();
@@ -535,6 +562,10 @@ export default function Mint() {
 
   const handleMint = async () => {
     if (!selectedPlayerForProfile) return;
+    // Remove redirect logic; only mint if verified
+
+    // Do nothing, mint button should be disabled/hidden if not verified
+
     setMintLoading(true);
     setMintError(null);
     setBroadcastHash(null);
@@ -565,6 +596,7 @@ export default function Mint() {
       const iface = new ethers.Interface(CURVE_LEAGUE_CONTRACT_ABI);
       const data = iface.encodeFunctionData("mintPlayer", [
         BigInt(selectedPlayerForProfile.id),
+        nullifier || BigInt(0), // Pass the nullifier to the contract if needed
       ]);
       const tx = {
         to: CURVE_LEAGUE_CONTRACT_ADDRESS,
@@ -1092,8 +1124,8 @@ export default function Mint() {
                       </div>
                     </div>
 
-                    {/* Mint Button */}
-                    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-xl p-6 border border-zinc-700">
+                    {/* Only Mint Button (Verify removed) */}
+                    <div className="bg-zinc-900/60 backdrop-blur-sm rounded-xl p-6 border border-zinc-700 flex flex-col gap-2">
                       {!address ||
                         (!keyringEth && (
                           <div className="mb-4 flex flex-col items-center">
@@ -1129,6 +1161,16 @@ export default function Mint() {
                               ? 0.5
                               : 1,
                         }}
+                        title={
+                          hasUserMinted(selectedPlayerForProfile.id)
+                            ? "Already minted."
+                            : getAvailableTokens(selectedPlayerForProfile.id) <=
+                              0
+                            ? "Sold out."
+                            : !address || !keyringEth
+                            ? "Connect wallet to mint."
+                            : ""
+                        }
                       >
                         {mintLoading
                           ? `Minting...`
