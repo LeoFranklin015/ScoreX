@@ -77,6 +77,7 @@ export const MintPlayerWithLedger: React.FC = () => {
   const [mintError, setMintError] = useState<any>(null);
   const [mintStep, setMintStep] = useState<string>("");
 
+  // Refactored: Only build and sign transaction
   const handleMint = async () => {
     setMintLoading(true);
     setMintError(null);
@@ -100,7 +101,10 @@ export const MintPlayerWithLedger: React.FC = () => {
       setMintStep("Building transaction...");
       // 3. Build unsigned tx
       const iface = new ethers.Interface(CURVE_LEAGUE_CONTRACT_ABI);
-      const data = iface.encodeFunctionData("mintPlayer", [BigInt(tokenId)]);
+      const data = iface.encodeFunctionData("mintPlayer", [
+        BigInt(tokenId),
+        BigInt(0),
+      ]);
       const tx = {
         to: CURVE_LEAGUE_CONTRACT_ADDRESS,
         value: freshPrice,
@@ -130,22 +134,36 @@ export const MintPlayerWithLedger: React.FC = () => {
           }
         );
       });
-      setMintStep("Broadcasting transaction...");
-      // 5. Broadcast
+      setMintStep("Signed. Ready to broadcast.");
+    } catch (err) {
+      setMintError(err);
+      setMintStep("");
+    } finally {
+      setMintLoading(false);
+    }
+  };
+
+  // New: Broadcast function
+  const handleBroadcast = async () => {
+    setBroadcastHash(null);
+    setBroadcastError(null);
+    setBroadcastLoading(true);
+    setMintStep("Broadcasting transaction...");
+    try {
       const { v, r, s } = signTransactionOutput || {};
       if (!v || !r || !s) throw new Error("No signature from Ledger");
       const signedTxHex = ethers.Transaction.from({
-        ...tx,
+        ...unsignedTx,
         signature: { v, r, s },
       }).serialized;
       const hash = await broadcastTransaction(signedTxHex);
       setBroadcastHash(hash);
       setMintStep("Done");
     } catch (err) {
-      setMintError(err);
+      setBroadcastError(err);
       setMintStep("");
     } finally {
-      setMintLoading(false);
+      setBroadcastLoading(false);
     }
   };
 
@@ -182,7 +200,22 @@ export const MintPlayerWithLedger: React.FC = () => {
             onChange={(e) => setGasPrice(e.target.value)}
           />
           <button onClick={handleMint} disabled={mintLoading || fetchingPrice}>
-            {mintLoading ? `Minting... ${mintStep}` : "Mint"}
+            {mintLoading ? `Minting... ${mintStep}` : "Mint (Sign)"}
+          </button>
+          {/* New: Broadcast button, enabled only after signing */}
+          <button
+            onClick={handleBroadcast}
+            disabled={
+              !signTransactionOutput ||
+              broadcastLoading ||
+              mintLoading ||
+              fetchingPrice
+            }
+            style={{ marginLeft: 8 }}
+          >
+            {broadcastLoading
+              ? "Broadcasting..."
+              : "Broadcast Mint Transaction"}
           </button>
           {mintError && <LabelizedJSON label="Mint Error" value={mintError} />}
           {mintStep && !mintLoading && <p>Step: {mintStep}</p>}

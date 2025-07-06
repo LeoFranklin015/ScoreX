@@ -36,6 +36,7 @@ interface LanyardProps {
   playerName?: string;
   playerTeam?: string;
   playerId?: string;
+  playerImageUrl?: string;
 }
 
 export default function Lanyard({
@@ -47,6 +48,7 @@ export default function Lanyard({
   playerName = "Player",
   playerTeam = "Team",
   playerId = "ID",
+  playerImageUrl,
 }: LanyardProps) {
   return (
     <div className="relative z-0 w-full h-screen flex justify-center items-center transform scale-100 origin-center">
@@ -59,11 +61,12 @@ export default function Lanyard({
       >
         <ambientLight intensity={Math.PI} />
         <Physics gravity={gravity} timeStep={1 / 60}>
-          <Band 
-            onCardClick={onCardClick} 
+          <Band
+            onCardClick={onCardClick}
             playerName={playerName}
             playerTeam={playerTeam}
             playerId={playerId}
+            playerImageUrl={playerImageUrl}
           />
         </Physics>
         <Environment blur={0.75}>
@@ -108,15 +111,17 @@ interface BandProps {
   playerName?: string;
   playerTeam?: string;
   playerId?: string;
+  playerImageUrl?: string;
 }
 
-function Band({ 
-  maxSpeed = 50, 
-  minSpeed = 0, 
+function Band({
+  maxSpeed = 50,
+  minSpeed = 0,
   onCardClick,
   playerName = "Player",
-  playerTeam = "Team", 
-  playerId = "ID"
+  playerTeam = "Team",
+  playerId = "ID",
+  playerImageUrl,
 }: BandProps) {
   // Using "any" for refs since the exact types depend on Rapier's internals
   const band = useRef<any>(null);
@@ -142,7 +147,7 @@ function Band({
   // Mock geometry and materials since we don't have the actual GLB file
   const mockGeometry = new THREE.BoxGeometry(1.6, 2.25, 0.02);
   const mockMaterial = new THREE.MeshPhysicalMaterial({
-    color: '#1a1a1a',
+    color: "#1a1a1a",
     clearcoat: 1,
     clearcoatRoughness: 0.15,
     roughness: 0.9,
@@ -150,8 +155,10 @@ function Band({
   });
 
   // Mock texture
-  const texture = useTexture('/placeholder.svg');
-  
+  const texture = useTexture("/placeholder.svg");
+  // Player image texture (if provided)
+  const playerImageTexture = playerImageUrl ? useTexture(playerImageUrl) : null;
+
   const [curve] = useState(
     () =>
       new THREE.CatmullRomCurve3([
@@ -313,19 +320,23 @@ function Band({
                 emissiveIntensity={0.1}
               />
             </mesh>
-            
+
             {/* Mock Clip */}
             <mesh position={[0, 1, 0.01]}>
               <boxGeometry args={[0.3, 0.1, 0.05]} />
-              <meshStandardMaterial color="#888888" roughness={0.3} metalness={0.8} />
+              <meshStandardMaterial
+                color="#888888"
+                roughness={0.3}
+                metalness={0.8}
+              />
             </mesh>
-            
+
             {/* Mock Clamp */}
             <mesh position={[0, 1.1, 0.01]}>
               <boxGeometry args={[0.2, 0.05, 0.03]} />
               <meshStandardMaterial color="#666666" />
             </mesh>
-            
+
             {/* Player Name Text */}
             <Text
               position={[0, 0.3, 0.011]}
@@ -338,7 +349,7 @@ function Band({
             >
               {playerName.toUpperCase()}
             </Text>
-            
+
             {/* Player Team Text */}
             <Text
               position={[0, 0.15, 0.011]}
@@ -351,7 +362,7 @@ function Band({
             >
               {playerTeam}
             </Text>
-            
+
             {/* Player ID Text */}
             <Text
               position={[0, -0.3, 0.011]}
@@ -364,25 +375,36 @@ function Band({
             >
               ID: {playerId}
             </Text>
-            
-            {/* Card Background */}
-            <mesh position={[0, 0, 0.01]}>
-              <planeGeometry args={[1.4, 0.8]} />
-              <meshBasicMaterial color="#0a0a0a" transparent opacity={0.9} />
-            </mesh>
+
+            {/* Player Image (if provided) */}
+            {playerImageTexture ? (
+              <mesh position={[0, 0, 0.011]}>
+                <planeGeometry args={[1.4, 0.8]} />
+                <meshBasicMaterial
+                  map={playerImageTexture}
+                  transparent
+                  opacity={0.95}
+                />
+              </mesh>
+            ) : (
+              <mesh position={[0, 0, 0.01]}>
+                <planeGeometry args={[1.4, 0.8]} />
+                <meshBasicMaterial color="#0a0a0a" transparent opacity={0.9} />
+              </mesh>
+            )}
 
             {/* Simple Logo - Top Right Corner */}
             <mesh position={[0.5, 0.35, 0.012]}>
               <planeGeometry args={[0.15, 0.15]} />
               <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
             </mesh>
-            
+
             {/* Logo Symbol - Simplified */}
             <mesh position={[0.5, 0.35, 0.013]}>
               <circleGeometry args={[0.035]} />
               <meshBasicMaterial color="#00ffaa" transparent opacity={1} />
             </mesh>
-            
+
             {/* Small accent shapes */}
             <mesh position={[0.47, 0.38, 0.013]}>
               <planeGeometry args={[0.03, 0.03]} />
@@ -397,16 +419,20 @@ function Band({
       </group>
       <mesh ref={band}>
         <primitive object={new MeshLineGeometry()} />
-        <primitive object={new MeshLineMaterial({
-          color: "#00ff00",
-          depthTest: false,
-          resolution: isSmall ? [1000, 2000] : [1000, 1000],
-          useMap: 1,
-          map: texture,
-          repeat: [-4, 1],
-          lineWidth: 1
-        })} />
+        <primitive
+          object={
+            new MeshLineMaterial({
+              color: "#00ff00",
+              depthTest: false,
+              resolution: isSmall ? [1000, 2000] : [1000, 1000],
+              useMap: 1,
+              map: texture,
+              repeat: [-4, 1],
+              lineWidth: 1,
+            })
+          }
+        />
       </mesh>
     </>
   );
-} 
+}

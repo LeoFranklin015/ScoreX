@@ -231,6 +231,6 @@ function LedgerDemo() {
 
 export default function Home() {
   // return <LedgerDemo />;
-  // return <MintPlayerWithLedger />;
-  return <HandleTransferWithLedger />;
+  return <MintPlayerWithLedger />;
+  // return <HandleTransferWithLedger />;
 }

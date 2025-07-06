@@ -3,14 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "../components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
 import { Badge } from "../components/ui/badge";
 import { Wallet, User, LogOut, Shield, Users } from "lucide-react";
 import { useVerification } from "../lib/verification-context";
@@ -25,11 +17,8 @@ export function Navbar() {
     { name: "Dashboard", href: "/dashboard" },
     { name: "Mint", href: "/mint" },
     { name: "My Team", href: "/my-team" },
-    { name: "Verify", href: "/verify" },
-    { name: "Player Payouts", href: "/payout" },
     { name: "Market", href: "/market" },
     { name: "Matches", href: "/matches" },
-    { name: "Leaderboard", href: "/leaderboard" },
   ];
 
   return (

@@ -596,7 +596,7 @@ export default function Mint() {
       const iface = new ethers.Interface(CURVE_LEAGUE_CONTRACT_ABI);
       const data = iface.encodeFunctionData("mintPlayer", [
         BigInt(selectedPlayerForProfile.id),
-        nullifier || BigInt(0), // Pass the nullifier to the contract if needed
+        BigInt(nullifier || 0),
       ]);
       const tx = {
         to: CURVE_LEAGUE_CONTRACT_ADDRESS,
@@ -607,6 +607,8 @@ export default function Mint() {
         data,
         chainId: 114,
       };
+      console.log(tx);
+      console.log(data);
       const unsignedHex = ethers.Transaction.from(tx).unsignedSerialized;
       updateStep("buildTx", "done");
       setCurrentStep("sign");

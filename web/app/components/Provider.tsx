@@ -232,12 +232,17 @@ export const LedgerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const broadcastTransaction = async (signedTxHex: string) => {
-    // Use Sepolia testnet for safety; replace with mainnet if needed
-    const provider = new ethers.JsonRpcProvider(
-      "https://coston2-api.flare.network/ext/C/rpc"
-    );
-    const txResponse = await provider.broadcastTransaction(signedTxHex);
-    return txResponse.hash;
+    try {
+      // Use Sepolia testnet for safety; replace with mainnet if needed
+      const provider = new ethers.JsonRpcProvider(
+        "https://coston2-api.flare.network/ext/C/rpc"
+      );
+      const txResponse = await provider.broadcastTransaction(signedTxHex);
+      return txResponse.hash;
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   };
 
   const value = useMemo(
