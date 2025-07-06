@@ -77,6 +77,14 @@ contract FanBondGame is Ownable, ReentrancyGuard {
         currentSeason = 0;
         seasonActive = true;
         seasonEnded = false;
+        // Pre-register 2 players
+        fanBondToken.addPlayer(1, 0x38b09fF7F662D02402397653766ed795F9FD8f25);
+        fanBondToken.addPlayer(2, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
+        fanBondToken.addPlayer(275, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
+        fanBondToken.addPlayer(276, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
+        fanBondToken.addPlayer(274, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
+        fanBondToken.addPlayer(20319, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
+        fanBondToken.addPlayer(882, 0x9D7f74d0C41E726EC95884E0e97Fa6129e3b5E99);
     }
 
     function initializeSeason(uint256[] calldata _playerIds) external onlyOwner {

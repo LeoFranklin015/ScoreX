@@ -1,5 +1,5 @@
 export const CURVE_LEAGUE_CONTRACT_ADDRESS =
-  "0x23EEA1ffA83df52735355E59895cF577c618e3f4";
+  "0xc333E5a3705B72F47594246a4c57559f2Ef8A57D";
 export const FAN_TOKEN_CONTRACT_ADDRESS =
   "0xf37dbc3ed0e18096d885f7e191bd3845a48c9a64";
 
@@ -41,6 +41,11 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
   {
     inputs: [],
     name: "MaxTokensReached",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "NoTokensFound",
     type: "error",
   },
   {
@@ -147,6 +152,25 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
       },
     ],
     name: "LiquidityWithdrawn",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "nullifier",
+        type: "uint256",
+      },
+    ],
+    name: "NullifierStored",
     type: "event",
   },
   {
@@ -381,6 +405,31 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "tokenIds",
+        type: "uint256[]",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
+      },
+    ],
+    name: "UserTokensListed",
+    type: "event",
+  },
+  {
     inputs: [],
     name: "BASE_PRICE",
     outputs: [
@@ -454,6 +503,30 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
         internalType: "contract FanBondToken",
         name: "",
         type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "user",
+        type: "address",
+      },
+    ],
+    name: "getAllUserTokens",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "tokenIds",
+        type: "uint256[]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "amounts",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
@@ -628,6 +701,25 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
     inputs: [
       {
         internalType: "address",
+        name: "user",
+        type: "address",
+      },
+    ],
+    name: "getUserNullifier",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "nullifier",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "from",
         type: "address",
       },
@@ -756,6 +848,11 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
       {
         internalType: "uint256",
         name: "tokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "nullifier",
         type: "uint256",
       },
     ],
@@ -984,6 +1081,25 @@ export const CURVE_LEAGUE_CONTRACT_ABI = [
         internalType: "bool",
         name: "",
         type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "userNullifiers",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
